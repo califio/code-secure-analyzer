@@ -59,27 +59,39 @@ func (g *Gitlab) CommentMergeRequest(findings []finding.Finding, mergeRequest *M
 			locationName := fmt.Sprintf("%s @ %s", location.Snippet, location.Path)
 			locationUrl := fmt.Sprintf("%s/-/blob/%s/%s#L%d", projectUrl, commitSha, location.Path, location.StartLine)
 			msg := fmt.Sprintf("**%s**\n\n**Location:** [%s](%s)\n\n**Description**\n\n%s", f.Name, locationName, locationUrl, f.Description)
+			position := gitlab.PositionOptions{
+				BaseSHA:      &mr.DiffRefs.BaseSha,
+				StartSHA:     &mr.DiffRefs.StartSha,
+				HeadSHA:      &mr.DiffRefs.HeadSha,
+				OldPath:      &location.Path,
+				NewPath:      &location.Path,
+				PositionType: gitlab.Ptr("text"),
+				NewLine:      &location.StartLine,
+				OldLine:      &location.StartLine,
+			}
 			_, res, err := g.client.Discussions.CreateMergeRequestDiscussion(
 				projectID,
 				mergeRequestID,
 				&gitlab.CreateMergeRequestDiscussionOptions{
-					Body: &msg,
-					Position: &gitlab.PositionOptions{
-						BaseSHA:      &mr.DiffRefs.BaseSha,
-						StartSHA:     &mr.DiffRefs.StartSha,
-						HeadSHA:      &mr.DiffRefs.HeadSha,
-						OldPath:      &location.Path,
-						NewPath:      &location.Path,
-						PositionType: gitlab.Ptr("text"),
-						NewLine:      &location.StartLine,
-						OldLine:      &location.StartLine,
-					},
+					Body:     &msg,
+					Position: &position,
 				},
 			)
-			if err != nil {
-				if res.StatusCode != 400 {
+			if err != nil && res.StatusCode == 400 {
+				position.OldLine = nil
+				_, _, err := g.client.Discussions.CreateMergeRequestDiscussion(
+					projectID,
+					mergeRequestID,
+					&gitlab.CreateMergeRequestDiscussionOptions{
+						Body:     &msg,
+						Position: &position,
+					},
+				)
+				if err != nil {
 					logger.Error("Create discussion on merge request discussion failure")
 					logger.Error(err.Error())
+				} else {
+					logger.Info("Create discussion: " + f.Name)
 				}
 			} else {
 				logger.Info("Create discussion: " + f.Name)

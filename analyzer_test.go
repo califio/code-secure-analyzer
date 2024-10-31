@@ -39,7 +39,7 @@ func TestCommentMergeRequest(t *testing.T) {
 	accessToken := "glpat-e9CcCrFjgixxN7debYhw"
 	serverUrl := "https://gitlab.com"
 	projectId := "50471840"
-	mergeRequestID := 20
+	mergeRequestID := 21
 	// Initialize the GitLab client
 	client, _ := gitlab.NewClient(accessToken, gitlab.WithBaseURL(serverUrl))
 	mr, _, err := client.MergeRequests.GetMergeRequest(projectId, mergeRequestID, nil)
@@ -51,7 +51,7 @@ func TestCommentMergeRequest(t *testing.T) {
 		projectId,
 		mergeRequestID,
 		&gitlab.CreateMergeRequestDiscussionOptions{
-			Body: gitlab.Ptr("Test Discussion"),
+			Body: gitlab.Ptr("Test Discussion1"),
 			Position: &gitlab.PositionOptions{
 				BaseSHA:      &mr.DiffRefs.BaseSha,
 				StartSHA:     &mr.DiffRefs.StartSha,
@@ -59,8 +59,7 @@ func TestCommentMergeRequest(t *testing.T) {
 				OldPath:      gitlab.Ptr("src/main/java/com/scalesec/vulnado/Cowsay.java"),
 				NewPath:      gitlab.Ptr("src/main/java/com/scalesec/vulnado/Cowsay.java"),
 				PositionType: gitlab.Ptr("text"),
-				NewLine:      gitlab.Ptr(11),
-				//OldLine: gitlab.Ptr(9),
+				NewLine:      gitlab.Ptr(8),
 			},
 		},
 	)
