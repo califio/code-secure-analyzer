@@ -56,9 +56,8 @@ func (g *Gitlab) CommentMergeRequest(findings []finding.Finding, mergeRequest *M
 	for _, f := range findings {
 		location := getLocation(f, mNewPaths)
 		if location != nil {
-			locationName := fmt.Sprintf("%s @ %s", location.Snippet, location.Path)
 			locationUrl := fmt.Sprintf("%s/-/blob/%s/%s#L%d", projectUrl, commitSha, location.Path, location.StartLine)
-			msg := fmt.Sprintf("**%s**\n\n**Location:** [%s](%s)\n\n**Description**\n\n%s", f.Name, locationName, locationUrl, f.Description)
+			msg := fmt.Sprintf("**%s**\n\n**Location:** `%s` @ [%s](%s)\n\n**Description**\n\n%s", f.Name, location.Snippet, location.Path, locationUrl, f.Description)
 			position := gitlab.PositionOptions{
 				BaseSHA:      &mr.DiffRefs.BaseSha,
 				StartSHA:     &mr.DiffRefs.StartSha,
