@@ -65,6 +65,7 @@ func (g *Gitlab) CommentMergeRequest(findings []finding.Finding, mergeRequest *M
 						NewPath:      &f.Location.Path,
 						PositionType: gitlab.Ptr("text"),
 						NewLine:      &f.Location.StartLine,
+						OldLine:      &f.Location.StartLine,
 					},
 				},
 			)
