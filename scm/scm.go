@@ -15,6 +15,7 @@ type SourceManager interface {
 	Name() string
 	IsActive() bool
 	ProjectID() string
+	ProjectURL() string
 	MergeRequest() (bool, *MergeRequest)
 	CommitTag() (bool, string)
 	CommitBranch() (bool, string)

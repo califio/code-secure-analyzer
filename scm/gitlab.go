@@ -50,34 +50,38 @@ func (g *Gitlab) CommentMergeRequest(findings []finding.Finding, mergeRequest *M
 		return err
 	}
 	// Create a new discussion each finding
+	projectUrl := g.ProjectURL()
+	commitSha := g.CommitHash()
 	for _, f := range findings {
-		if mNewPaths[f.Location.Path] {
+		location := getLocation(f, mNewPaths)
+		if location != nil {
+			locationName := fmt.Sprintf("%s @ %s", location.Snippet, location.Path)
+			locationUrl := fmt.Sprintf("%s/-/blob/%s/%s#L%s", projectUrl, commitSha, location.Path, location.StartLine)
+			msg := fmt.Sprintf("**%s**\n\n**Location:** [%s](%s)\n\n**Description**\n\n%s", f.Name, locationName, locationUrl, f.Description)
 			_, res, err := g.client.Discussions.CreateMergeRequestDiscussion(
 				projectID,
 				mergeRequestID,
 				&gitlab.CreateMergeRequestDiscussionOptions{
-					Body: gitlab.Ptr(fmt.Sprintf("%s\n\n%s", f.Name, f.Description)),
+					Body: &msg,
 					Position: &gitlab.PositionOptions{
 						BaseSHA:      &mr.DiffRefs.BaseSha,
 						StartSHA:     &mr.DiffRefs.StartSha,
 						HeadSHA:      &mr.DiffRefs.HeadSha,
-						OldPath:      &f.Location.Path,
-						NewPath:      &f.Location.Path,
+						OldPath:      &location.Path,
+						NewPath:      &location.Path,
 						PositionType: gitlab.Ptr("text"),
-						NewLine:      &f.Location.StartLine,
-						OldLine:      &f.Location.StartLine,
+						NewLine:      &location.StartLine,
+						OldLine:      &location.StartLine,
 					},
 				},
 			)
 			if err != nil {
-				if res.StatusCode == 400 {
-					logger.Println(err.Error())
-				} else {
-					logger.Error("create discussion on merge request discussion failure")
+				if res.StatusCode != 400 {
+					logger.Error("Create discussion on merge request discussion failure")
 					logger.Error(err.Error())
 				}
 			} else {
-				logger.Info("create discussion success: " + f.Name)
+				logger.Info("Create discussion: " + f.Name)
 			}
 		}
 	}
@@ -91,6 +95,11 @@ func (g *Gitlab) IsActive() bool {
 func (g *Gitlab) ProjectID() string {
 	return os.Getenv("CI_PROJECT_ID")
 }
+
+func (g *Gitlab) ProjectURL() string {
+	return os.Getenv("CI_PROJECT_URL")
+}
+
 func (g *Gitlab) MergeRequest() (bool, *MergeRequest) {
 	if os.Getenv("CI_MERGE_REQUEST_IID") != "" {
 		return true, &MergeRequest{
@@ -125,4 +134,16 @@ func (g *Gitlab) CommitHash() string {
 
 func (g *Gitlab) CommitTitle() string {
 	return os.Getenv("CI_COMMIT_TITLE")
+}
+
+func getLocation(finding finding.Finding, mPath map[string]bool) *finding.Location {
+	if mPath[finding.Location.Path] {
+		return finding.Location
+	}
+	for i := len(finding.CodeFlow) - 1; i >= 0; i-- {
+		if mPath[finding.CodeFlow[i].Path] {
+			return &finding.CodeFlow[i]
+		}
+	}
+	return nil
 }
