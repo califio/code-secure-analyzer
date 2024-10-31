@@ -5,7 +5,6 @@ import (
 	"analyzer/sarif"
 	"analyzer/scm"
 	"encoding/json"
-	"github.com/xanzy/go-gitlab"
 	"os"
 	"testing"
 )
@@ -33,39 +32,4 @@ func TestScan(t *testing.T) {
 		RegisterSourceManager(gitlab)
 	}
 	HandleFindings(findings)
-}
-
-func TestCommentMergeRequest(t *testing.T) {
-	accessToken := "glpat-e9CcCrFjgixxN7debYhw"
-	serverUrl := "https://gitlab.com"
-	projectId := "50471840"
-	mergeRequestID := 21
-	// Initialize the GitLab client
-	client, _ := gitlab.NewClient(accessToken, gitlab.WithBaseURL(serverUrl))
-	mr, _, err := client.MergeRequests.GetMergeRequest(projectId, mergeRequestID, nil)
-	if err != nil {
-		logger.Error(err.Error())
-	}
-	// Create a new discussion each finding
-	discussion, _, err := client.Discussions.CreateMergeRequestDiscussion(
-		projectId,
-		mergeRequestID,
-		&gitlab.CreateMergeRequestDiscussionOptions{
-			Body: gitlab.Ptr("Test Discussion1"),
-			Position: &gitlab.PositionOptions{
-				BaseSHA:      &mr.DiffRefs.BaseSha,
-				StartSHA:     &mr.DiffRefs.StartSha,
-				HeadSHA:      &mr.DiffRefs.HeadSha,
-				OldPath:      gitlab.Ptr("src/main/java/com/scalesec/vulnado/Cowsay.java"),
-				NewPath:      gitlab.Ptr("src/main/java/com/scalesec/vulnado/Cowsay.java"),
-				PositionType: gitlab.Ptr("text"),
-				NewLine:      gitlab.Ptr(8),
-			},
-		},
-	)
-	if err != nil {
-		logger.Error(err.Error())
-	} else {
-		logger.Info(discussion.ID)
-	}
 }
