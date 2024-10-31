@@ -44,6 +44,7 @@ func (g *Gitlab) CommentMergeRequest(findings []finding.Finding, mergeRequest *M
 	mNewPaths := make(map[string]bool)
 	for _, diff := range diffs {
 		mNewPaths[diff.NewPath] = true
+		mNewPaths[diff.OldPath] = true
 	}
 	mr, _, err := g.client.MergeRequests.GetMergeRequest(projectID, mergeRequestID, nil)
 	if err != nil {
@@ -56,7 +57,7 @@ func (g *Gitlab) CommentMergeRequest(findings []finding.Finding, mergeRequest *M
 		location := getLocation(f, mNewPaths)
 		if location != nil {
 			locationName := fmt.Sprintf("%s @ %s", location.Snippet, location.Path)
-			locationUrl := fmt.Sprintf("%s/-/blob/%s/%s#L%s", projectUrl, commitSha, location.Path, location.StartLine)
+			locationUrl := fmt.Sprintf("%s/-/blob/%s/%s#L%d", projectUrl, commitSha, location.Path, location.StartLine)
 			msg := fmt.Sprintf("**%s**\n\n**Location:** [%s](%s)\n\n**Description**\n\n%s", f.Name, locationName, locationUrl, f.Description)
 			_, res, err := g.client.Discussions.CreateMergeRequestDiscussion(
 				projectID,
