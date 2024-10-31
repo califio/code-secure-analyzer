@@ -6,6 +6,7 @@ import (
 	"analyzer/scm"
 	"encoding/json"
 	"os"
+	"strings"
 	"testing"
 )
 
@@ -32,4 +33,18 @@ func TestScan(t *testing.T) {
 		RegisterSourceManager(gitlab)
 	}
 	HandleFindings(findings)
+}
+
+func TestParseMessage(t *testing.T) {
+	message := "Source: 'input' @ 'src/main/java/com/scalesec/vulnado/LoginController.java:19'"
+	arr := strings.Split(message, "@")
+	if len(arr) != 2 {
+		t.Fail()
+	}
+	path := strings.Trim(arr[1], " '")
+	arr = strings.Split(path, ":")
+	if len(arr) != 2 {
+		t.Fail()
+	}
+	logger.Info(arr[0])
 }

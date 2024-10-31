@@ -74,9 +74,18 @@ func (result *Result) GetCodeFlow() []finding.Location {
 	}
 	var locations []finding.Location
 	for _, location := range threadFlows[0].Locations {
+		/*
+			need to parse message to find real location
+			this is the bug of semgrep. see here: https://github.com/semgrep/semgrep/issues/7935
+		*/
 		physical := location.Location.PhysicalLocation
+		message := location.Location.Message.Text
+		path := getPathFromMessage(message)
+		if path == "" {
+			path = physical.ArtifactLocation.Uri
+		}
 		locations = append(locations, finding.Location{
-			Path:        physical.ArtifactLocation.Uri,
+			Path:        path,
 			Snippet:     physical.Region.Snippet.Text,
 			StartLine:   physical.Region.StartLine,
 			EndLine:     physical.Region.EndLine,
@@ -85,6 +94,19 @@ func (result *Result) GetCodeFlow() []finding.Location {
 		})
 	}
 	return locations
+}
+
+func getPathFromMessage(message string) string {
+	arr := strings.Split(message, "@")
+	if len(arr) != 2 {
+		return ""
+	}
+	path := strings.Trim(arr[1], " '")
+	arr = strings.Split(path, ":")
+	if len(arr) != 2 {
+		return ""
+	}
+	return arr[0]
 }
 
 type physicalLocation struct {
