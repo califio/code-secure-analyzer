@@ -1,6 +1,6 @@
 package api
 
-import "analyzer/finding"
+import "gitlab.com/code-secure/analyzer/finding"
 
 type CiScanRequest struct {
 	Source         string `json:"source,omitempty"`

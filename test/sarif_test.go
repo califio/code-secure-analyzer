@@ -1,9 +1,9 @@
 package test
 
 import (
-	"analyzer/logger"
-	"analyzer/sarif"
 	"encoding/json"
+	"gitlab.com/code-secure/analyzer/logger"
+	"gitlab.com/code-secure/analyzer/sarif"
 	"os"
 	"testing"
 )

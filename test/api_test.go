@@ -1,9 +1,9 @@
 package test
 
 import (
-	"analyzer/api"
-	"analyzer/finding"
-	"analyzer/logger"
+	"gitlab.com/code-secure/analyzer/api"
+	"gitlab.com/code-secure/analyzer/finding"
+	"gitlab.com/code-secure/analyzer/logger"
 	"testing"
 )
 

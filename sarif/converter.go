@@ -1,9 +1,9 @@
 package sarif
 
 import (
-	"analyzer/finding"
-	"analyzer/logger"
 	"fmt"
+	"gitlab.com/code-secure/analyzer/finding"
+	"gitlab.com/code-secure/analyzer/logger"
 )
 
 func ToFindings(report *Sarif) []finding.SASTFinding {

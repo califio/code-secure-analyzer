@@ -1,6 +1,6 @@
 package git
 
-import "analyzer/finding"
+import "gitlab.com/code-secure/analyzer/finding"
 
 type MergeRequest struct {
 	SourceBranch      string

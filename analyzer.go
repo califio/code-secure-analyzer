@@ -1,9 +1,9 @@
 package main
 
 import (
-	"analyzer/git"
-	"analyzer/handler"
-	"analyzer/logger"
+	"gitlab.com/code-secure/analyzer/git"
+	"gitlab.com/code-secure/analyzer/handler"
+	"gitlab.com/code-secure/analyzer/logger"
 )
 
 type Analyzer[T any] struct {

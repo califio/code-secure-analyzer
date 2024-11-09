@@ -1,4 +1,4 @@
-module analyzer
+module gitlab.com/code-secure/analyzer
 
 go 1.22
 

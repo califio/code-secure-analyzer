@@ -1,10 +1,10 @@
 package git
 
 import (
-	"analyzer/finding"
-	"analyzer/logger"
 	"fmt"
 	"github.com/xanzy/go-gitlab"
+	"gitlab.com/code-secure/analyzer/finding"
+	"gitlab.com/code-secure/analyzer/logger"
 	"os"
 	"strconv"
 )

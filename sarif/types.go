@@ -1,7 +1,7 @@
 package sarif
 
 import (
-	"analyzer/finding"
+	"gitlab.com/code-secure/analyzer/finding"
 	"regexp"
 	"strings"
 )

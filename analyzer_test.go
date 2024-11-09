@@ -1,12 +1,12 @@
 package main
 
 import (
-	"analyzer/finding"
-	"analyzer/git"
-	"analyzer/handler"
-	"analyzer/logger"
-	"analyzer/sarif"
 	"encoding/json"
+	"gitlab.com/code-secure/analyzer/finding"
+	"gitlab.com/code-secure/analyzer/git"
+	"gitlab.com/code-secure/analyzer/handler"
+	"gitlab.com/code-secure/analyzer/logger"
+	"gitlab.com/code-secure/analyzer/sarif"
 	"os"
 	"strings"
 	"testing"

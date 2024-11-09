@@ -1,7 +1,7 @@
 package test
 
 import (
-	"analyzer/logger"
+	"gitlab.com/code-secure/analyzer/logger"
 	"testing"
 )
 

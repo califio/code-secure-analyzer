@@ -1,12 +1,12 @@
 package api
 
 import (
-	"analyzer/finding"
-	"analyzer/logger"
 	"encoding/json"
 	"errors"
 	"github.com/google/go-querystring/query"
 	"github.com/hashicorp/go-retryablehttp"
+	"gitlab.com/code-secure/analyzer/finding"
+	"gitlab.com/code-secure/analyzer/logger"
 	"io"
 	"net/http"
 	"net/url"

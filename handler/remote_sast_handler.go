@@ -1,11 +1,11 @@
 package handler
 
 import (
-	"analyzer/api"
-	"analyzer/finding"
-	"analyzer/git"
-	"analyzer/logger"
 	"fmt"
+	"gitlab.com/code-secure/analyzer/api"
+	"gitlab.com/code-secure/analyzer/finding"
+	"gitlab.com/code-secure/analyzer/git"
+	"gitlab.com/code-secure/analyzer/logger"
 )
 
 type RemoteSASTHandler struct {

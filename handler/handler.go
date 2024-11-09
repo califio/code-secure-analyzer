@@ -1,13 +1,13 @@
 package handler
 
 import (
-	"analyzer/api"
-	"analyzer/finding"
-	"analyzer/git"
-	"analyzer/logger"
 	"fmt"
 	"github.com/fatih/color"
 	"github.com/rodaine/table"
+	"gitlab.com/code-secure/analyzer/api"
+	"gitlab.com/code-secure/analyzer/finding"
+	"gitlab.com/code-secure/analyzer/git"
+	"gitlab.com/code-secure/analyzer/logger"
 	"os"
 )
 
