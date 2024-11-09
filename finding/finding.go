@@ -20,6 +20,7 @@ type SASTFinding struct {
 	Identity       string     `json:"identity,omitempty"`
 	Name           string     `json:"name,omitempty"`
 	Description    string     `json:"description,omitempty"`
+	Category       string     `json:"category,omitempty"`
 	Recommendation string     `json:"recommendation,omitempty"`
 	Severity       string     `json:"severity,omitempty"`
 	Location       *Location  `json:"location,omitempty"`
