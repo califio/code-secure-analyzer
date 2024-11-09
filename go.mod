@@ -1,6 +1,6 @@
 module analyzer
 
-go 1.20
+go 1.22
 
 require (
 	github.com/fatih/color v1.16.0

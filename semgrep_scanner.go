@@ -22,7 +22,11 @@ type SemgrepScanner struct {
 	ProjectPath   string
 }
 
-func (scanner *SemgrepScanner) Scan() ([]finding.Finding, error) {
+func (scanner *SemgrepScanner) Name() string {
+	return "semgrep"
+}
+
+func (scanner *SemgrepScanner) Scan() ([]finding.SASTFinding, error) {
 	args := scanner.args()
 	cmd := exec.Command("semgrep", args...)
 	logger.Info(cmd.String())

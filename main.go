@@ -1,8 +1,9 @@
 package main
 
 import (
+	"analyzer/finding"
+	"analyzer/handler"
 	"analyzer/logger"
-	"analyzer/scm"
 	"github.com/urfave/cli/v2"
 	"os"
 )
@@ -62,11 +63,10 @@ func analyzeCommand() *cli.Command {
 	flags := analyzeFlags()
 	return &cli.Command{
 		Name:  AnalyzeCommand,
-		Usage: "semgrep-ci",
+		Usage: "semgrep",
 		Flags: flags,
 		Action: func(context *cli.Context) error {
-			// register handler
-			RegisterHandler(&DefaultHandler{})
+			analyzer := NewAnalyzer[finding.SASTFinding]()
 			// register scanner
 			scanner := &SemgrepScanner{
 				Configs:       context.String(flagConfigs),
@@ -76,19 +76,12 @@ func analyzeCommand() *cli.Command {
 				Verbose:       context.Bool(flagVerbose),
 				Output:        context.String(flagOutput),
 			}
-			RegisterScanner(scanner)
-			// register source manager (GitLab, GitHub)
-			// gitlab
-			gitlab, err := scm.NewGitlab()
-			if err != nil {
-				logger.Error(err.Error())
-			} else {
-				RegisterSourceManager(gitlab)
-			}
-			// other source manager
-			//
-			findings := analyzer.Scan()
-			analyzer.HandleFindings(findings)
+			analyzer.RegisterScanner(scanner)
+			// register handler
+			handler := handler.GetSASTHandler()
+			analyzer.RegisterHandler(handler)
+			// run
+			analyzer.Run()
 			return nil
 		},
 	}

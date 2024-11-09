@@ -21,8 +21,8 @@ func TestGetRules(t *testing.T) {
 		println(finding.Description)
 		println(finding.Severity)
 		println(finding.Location.String())
-		if finding.CodeFlow != nil {
-			for _, location := range finding.CodeFlow {
+		if finding.FindingFlow != nil {
+			for _, location := range finding.FindingFlow {
 				println(location.String())
 			}
 		}

@@ -1,7 +1,7 @@
 package main
 
-import "analyzer/finding"
-
-type Scanner interface {
-	Scan() ([]finding.Finding, error)
+// Scanner Finding is SASTFinding or SCAFinding,...
+type Scanner[T any] interface {
+	Scan() ([]T, error)
+	Name() string
 }

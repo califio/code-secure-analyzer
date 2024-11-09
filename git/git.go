@@ -1,4 +1,4 @@
-package scm
+package git
 
 import "analyzer/finding"
 
@@ -16,10 +16,14 @@ type SourceManager interface {
 	IsActive() bool
 	ProjectID() string
 	ProjectURL() string
-	MergeRequest() (bool, *MergeRequest)
-	CommitTag() (bool, string)
-	CommitBranch() (bool, string)
+	ProjectName() string
+	ProjectGroup() string
+	MergeRequest() *MergeRequest
+	CommitTag() string
+	CommitBranch() string
 	CommitHash() string
 	CommitTitle() string
-	CommentMergeRequest(findings []finding.Finding, mr *MergeRequest) error
+	DefaultBranch() string
+	JobURL() string
+	CommentSASTFindingOnMergeRequest(findings []finding.SASTFinding, mr *MergeRequest) error
 }

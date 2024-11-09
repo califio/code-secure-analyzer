@@ -1,4 +1,4 @@
-package scm
+package git
 
 import (
 	"analyzer/finding"
@@ -33,7 +33,7 @@ type Gitlab struct {
 func (g *Gitlab) Name() string {
 	return "GitLab"
 }
-func (g *Gitlab) CommentMergeRequest(findings []finding.Finding, mergeRequest *MergeRequest) error {
+func (g *Gitlab) CommentSASTFindingOnMergeRequest(findings []finding.SASTFinding, mergeRequest *MergeRequest) error {
 	projectID := g.ProjectID()
 	// Merge Request IID (not the project-wide MR ID)
 	mergeRequestID, _ := strconv.Atoi(mergeRequest.MergeRequestID)
@@ -57,10 +57,10 @@ func (g *Gitlab) CommentMergeRequest(findings []finding.Finding, mergeRequest *M
 		location := getLocation(f, mNewPaths)
 		if location != nil {
 			locationUrl := fmt.Sprintf("%s/-/blob/%s/%s#L%d", projectUrl, commitSha, location.Path, location.StartLine)
-			msg := fmt.Sprintf("**%s**\n\n**Location:** `%s` @ [%s](%s)\n\n**Description**\n\n%s", f.Name, location.Snippet, location.Path, locationUrl, f.Description)
-			if len(f.CodeFlow) > 0 {
+			msg := fmt.Sprintf("**%s**\n\n**FindingLocation:** `%s` @ [%s](%s)\n\n**Description**\n\n%s", f.Name, location.Snippet, location.Path, locationUrl, f.Description)
+			if len(f.FindingFlow) > 0 {
 				flow := ""
-				for index, step := range f.CodeFlow {
+				for index, step := range f.FindingFlow {
 					url := fmt.Sprintf("%s/-/blob/%s/%s#L%d", projectUrl, commitSha, step.Path, step.StartLine)
 					flow += fmt.Sprintf("%d. `%s` @ [%s](%s)\n", index+1, step.Snippet, step.Path, url)
 				}
@@ -85,7 +85,7 @@ func (g *Gitlab) CommentMergeRequest(findings []finding.Finding, mergeRequest *M
 					Position: &position,
 				},
 			)
-			if err != nil && res.StatusCode == 400 {
+			if err != nil && res != nil && res.StatusCode == 400 {
 				position.OldLine = nil
 				_, _, err := g.client.Discussions.CreateMergeRequestDiscussion(
 					projectID,
@@ -117,13 +117,21 @@ func (g *Gitlab) ProjectID() string {
 	return os.Getenv("CI_PROJECT_ID")
 }
 
+func (g *Gitlab) ProjectName() string {
+	return os.Getenv("CI_PROJECT_NAME")
+}
+
+func (g *Gitlab) ProjectGroup() string {
+	return os.Getenv("CI_PROJECT_NAMESPACE")
+}
+
 func (g *Gitlab) ProjectURL() string {
 	return os.Getenv("CI_PROJECT_URL")
 }
 
-func (g *Gitlab) MergeRequest() (bool, *MergeRequest) {
+func (g *Gitlab) MergeRequest() *MergeRequest {
 	if os.Getenv("CI_MERGE_REQUEST_IID") != "" {
-		return true, &MergeRequest{
+		return &MergeRequest{
 			SourceBranch:      os.Getenv("CI_MERGE_REQUEST_SOURCE_BRANCH_NAME"),
 			SourceBranchHash:  os.Getenv("CI_MERGE_REQUEST_SOURCE_BRANCH_SHA"),
 			TargetBranch:      os.Getenv("CI_MERGE_REQUEST_TARGET_BRANCH_NAME"),
@@ -132,21 +140,15 @@ func (g *Gitlab) MergeRequest() (bool, *MergeRequest) {
 			MergeRequestTitle: os.Getenv("CI_MERGE_REQUEST_TITLE"),
 		}
 	}
-	return false, nil
+	return nil
 }
 
-func (g *Gitlab) CommitTag() (bool, string) {
-	if os.Getenv("CI_COMMIT_TAG") != "" {
-		return true, os.Getenv("CI_COMMIT_TAG")
-	}
-	return false, ""
+func (g *Gitlab) CommitTag() string {
+	return os.Getenv("CI_COMMIT_TAG")
 }
 
-func (g *Gitlab) CommitBranch() (bool, string) {
-	if os.Getenv("CI_COMMIT_BRANCH") != "" {
-		return true, os.Getenv("CI_COMMIT_BRANCH")
-	}
-	return false, ""
+func (g *Gitlab) CommitBranch() string {
+	return os.Getenv("CI_COMMIT_BRANCH")
 }
 
 func (g *Gitlab) CommitHash() string {
@@ -157,13 +159,21 @@ func (g *Gitlab) CommitTitle() string {
 	return os.Getenv("CI_COMMIT_TITLE")
 }
 
-func getLocation(finding finding.Finding, mPath map[string]bool) *finding.Location {
+func (g *Gitlab) DefaultBranch() string {
+	return os.Getenv("CI_DEFAULT_BRANCH")
+}
+
+func (g *Gitlab) JobURL() string {
+	return os.Getenv("CI_JOB_URL")
+}
+
+func getLocation(finding finding.SASTFinding, mPath map[string]bool) *finding.Location {
 	if mPath[finding.Location.Path] {
 		return finding.Location
 	}
-	for i := len(finding.CodeFlow) - 1; i >= 0; i-- {
-		if mPath[finding.CodeFlow[i].Path] {
-			return &finding.CodeFlow[i]
+	for i := len(finding.FindingFlow) - 1; i >= 0; i-- {
+		if mPath[finding.FindingFlow[i].Path] {
+			return &finding.FindingFlow[i]
 		}
 	}
 	return nil

@@ -6,8 +6,8 @@ import (
 	"fmt"
 )
 
-func ToFindings(report *Sarif) []finding.Finding {
-	var findings []finding.Finding
+func ToFindings(report *Sarif) []finding.SASTFinding {
+	var findings []finding.SASTFinding
 	mExists := make(map[string]bool)
 	for _, run := range report.Runs {
 		issues, err := transformRun(run)
@@ -24,13 +24,13 @@ func ToFindings(report *Sarif) []finding.Finding {
 	return findings
 }
 
-func transformRun(r Run) ([]finding.Finding, error) {
+func transformRun(r Run) ([]finding.SASTFinding, error) {
 	mRules := make(map[string]Rule)
 	for _, rule := range r.Tool.Driver.Rules {
 		mRules[rule.ID] = rule
 	}
 
-	var findings []finding.Finding
+	var findings []finding.SASTFinding
 	for _, result := range r.Results {
 		ruleId := result.RuleID
 		rule := mRules[ruleId]
@@ -45,7 +45,7 @@ func transformRun(r Run) ([]finding.Finding, error) {
 				StartColumn: physicalLocation.Region.StartColumn,
 				EndColumn:   physicalLocation.Region.EndColumn,
 			}
-			findings = append(findings, finding.Finding{
+			findings = append(findings, finding.SASTFinding{
 				RuleID:         result.RuleID,
 				Identity:       result.Fingerprints.Id,
 				Name:           fmt.Sprintf("Semgrep Finding: %s", result.RuleID),
@@ -53,7 +53,7 @@ func transformRun(r Run) ([]finding.Finding, error) {
 				Recommendation: "",
 				Severity:       rule.Severity(),
 				Location:       &location,
-				CodeFlow:       result.GetCodeFlow(),
+				FindingFlow:    result.GetCodeFlow(),
 			})
 		}
 	}
