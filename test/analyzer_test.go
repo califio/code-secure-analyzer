@@ -1,7 +1,8 @@
-package main
+package test
 
 import (
 	"encoding/json"
+	"gitlab.com/code-secure/analyzer/analyzer"
 	"gitlab.com/code-secure/analyzer/finding"
 	"gitlab.com/code-secure/analyzer/git"
 	"gitlab.com/code-secure/analyzer/handler"
@@ -28,7 +29,7 @@ func TestScanGitlabRepo(t *testing.T) {
 	os.Setenv("CI_COMMIT_SHA", "891832b2fdecb72c444af1a6676eba6eb40435ab")
 	os.Setenv("CODE_SECURE_TOKEN", "4084269e05de4cddacb3ef4f9333848e51b7d36b610441919080b0dfde6888f8")
 	os.Setenv("CODE_SECURE_SERVER", "http://localhost:5272")
-	data, err := os.ReadFile("testdata/semgrep.sarif")
+	data, err := os.ReadFile("../testdata/semgrep.sarif")
 	if err != nil {
 		logger.Error(err.Error())
 	}
@@ -38,13 +39,13 @@ func TestScanGitlabRepo(t *testing.T) {
 		logger.Fatal(err.Error())
 	}
 	findings := sarif.ToFindings(&rep)
-	analyzer := NewAnalyzer[finding.SASTFinding]()
+	analyzer := analyzer.NewAnalyzer[finding.SASTFinding]()
 	handler := handler.GetSASTHandler()
 	analyzer.RegisterHandler(handler)
 	// source manager
 	gitlab, err := git.NewGitlab()
 	analyzer.RegisterSourceManager(gitlab)
-	analyzer.handler.InitScan(gitlab, "semgrep")
+	analyzer.InitScan("semgrep")
 	analyzer.HandleFindings(findings)
 }
 

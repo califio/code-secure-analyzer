@@ -1,4 +1,4 @@
-package main
+package analyzer
 
 import (
 	"gitlab.com/code-secure/analyzer/git"
@@ -42,6 +42,10 @@ func (analyzer *Analyzer[T]) RegisterSourceManager(sourceManager git.SourceManag
 
 func (analyzer *Analyzer[T]) RegisterHandler(handler handler.Handler[T]) {
 	analyzer.handler = handler
+}
+
+func (analyzer *Analyzer[T]) InitScan(scanner string) {
+	analyzer.handler.InitScan(analyzer.sourceManager, scanner)
 }
 
 func (analyzer *Analyzer[T]) Scan() []T {
