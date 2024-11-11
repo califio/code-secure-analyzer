@@ -41,7 +41,7 @@ func GetSASTHandler() Handler[finding.SASTFinding] {
 }
 
 func PrintSASTFindings(findings []finding.SASTFinding) {
-	tbl := table.New("ID", "Name", "Severity", "FindingLocation")
+	tbl := table.New("ID", "Name", "Severity", "Location")
 
 	tbl.WithHeaderFormatter(color.New(color.FgGreen, color.Underline).SprintfFunc()).
 		WithFirstColumnFormatter(color.New(color.FgYellow).SprintfFunc())

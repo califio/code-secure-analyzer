@@ -57,7 +57,7 @@ func (g *Gitlab) CommentSASTFindingOnMergeRequest(findings []finding.SASTFinding
 		location := getLocation(f, mNewPaths)
 		if location != nil {
 			locationUrl := fmt.Sprintf("%s/-/blob/%s/%s#L%d", projectUrl, commitSha, location.Path, location.StartLine)
-			msg := fmt.Sprintf("**%s**\n\n**FindingLocation:** `%s` @ [%s](%s)\n\n**Description**\n\n%s", f.Name, location.Snippet, location.Path, locationUrl, f.Description)
+			msg := fmt.Sprintf("**%s**\n\n**Location:** `%s` @ [%s](%s)\n\n**Description**\n\n%s", f.Name, location.Snippet, location.Path, locationUrl, f.Description)
 			if len(f.FindingFlow) > 0 {
 				flow := ""
 				for index, step := range f.FindingFlow {
@@ -85,7 +85,7 @@ func (g *Gitlab) CommentSASTFindingOnMergeRequest(findings []finding.SASTFinding
 					Position: &position,
 				},
 			)
-			if err != nil && res != nil && res.StatusCode == 400 {
+			if err != nil || (res != nil && res.StatusCode == 400) {
 				position.OldLine = nil
 				_, _, err := g.client.Discussions.CreateMergeRequestDiscussion(
 					projectID,

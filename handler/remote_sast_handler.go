@@ -53,6 +53,7 @@ func (handler *RemoteSASTHandler) HandleFindings(sourceManager git.SourceManager
 			var findings []finding.SASTFinding
 			findings = append(findings, response.OpenFindings...)
 			findings = append(findings, response.ConfirmedFindings...)
+			findings = append(findings, response.NewFindings...)
 			err := sourceManager.CommentSASTFindingOnMergeRequest(findings, mergeRequest)
 			if err != nil {
 				logger.Error("Comment on merge request error")
