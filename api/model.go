@@ -16,7 +16,7 @@ type CiScanRequest struct {
 	Scanner        string `json:"scanner"`
 	Type           string `json:"type"`
 	JobUrl         string `json:"jobUrl"`
-	IsDefault      bool   `json:"isDefault"`
+	IsDefault      *bool  `json:"isDefault"`
 }
 
 type ScanInfo struct {

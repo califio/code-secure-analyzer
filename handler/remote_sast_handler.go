@@ -83,6 +83,7 @@ func (handler *RemoteSASTHandler) InitScan(sourceManager git.SourceManager, scan
 		mergeRequestId = mergeRequest.MergeRequestID
 	}
 	repoName := sourceManager.ProjectGroup() + "/" + sourceManager.ProjectName()
+	isDefault := commitBranch == sourceManager.DefaultBranch()
 	body := api.CiScanRequest{
 		Source:         sourceManager.Name(),
 		RepoId:         sourceManager.ProjectID(),
@@ -97,7 +98,7 @@ func (handler *RemoteSASTHandler) InitScan(sourceManager git.SourceManager, scan
 		Scanner:        scanner,
 		Type:           api.ScanSAST,
 		JobUrl:         sourceManager.JobURL(),
-		IsDefault:      commitBranch == sourceManager.DefaultBranch(),
+		IsDefault:      api.Ptr(isDefault),
 	}
 	scanInfo, err := handler.client.InitScan(&body)
 	if scanInfo != nil {
