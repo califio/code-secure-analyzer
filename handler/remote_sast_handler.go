@@ -50,14 +50,12 @@ func (handler *RemoteSASTHandler) HandleFindings(sourceManager git.SourceManager
 		// comment new findings on merge request
 		mergeRequest := sourceManager.MergeRequest()
 		if mergeRequest != nil {
-			var findings []finding.SASTFinding
-			findings = append(findings, response.OpenFindings...)
-			findings = append(findings, response.ConfirmedFindings...)
-			findings = append(findings, response.NewFindings...)
-			err := sourceManager.CommentSASTFindingOnMergeRequest(findings, mergeRequest)
-			if err != nil {
-				logger.Error("Comment on merge request error")
-				logger.Error(err.Error())
+			if len(response.NewFindings) > 0 {
+				err := sourceManager.CommentSASTFindingOnMergeRequest(findings, mergeRequest)
+				if err != nil {
+					logger.Error("Comment on merge request error")
+					logger.Error(err.Error())
+				}
 			}
 		}
 	}
@@ -103,6 +101,7 @@ func (handler *RemoteSASTHandler) InitScan(sourceManager git.SourceManager, scan
 	}
 	scanInfo, err := handler.client.InitScan(&body)
 	if scanInfo != nil {
+		logger.Info("Scan initialized: " + scanInfo.ScanId)
 		handler.scanId = scanInfo.ScanId
 	}
 	if err != nil {
