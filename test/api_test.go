@@ -7,6 +7,35 @@ import (
 	"testing"
 )
 
+func TestInitScan(t *testing.T) {
+	client, err := api.NewClient("http://localhost:5272", "4dde5ecdabc442a993d994c37cd3fd28d72ed58edbfd4c4180fa5f7acbbbda4c")
+	if err != nil {
+		logger.Fatal(err.Error())
+		t.Fail()
+	}
+	isDefault := false
+	scan, err := client.InitScan(&api.CiScanRequest{
+		Source:         "GitLab",
+		RepoId:         "50471840",
+		RepoUrl:        "https://gitlab.com/0xduo/vulnado",
+		RepoName:       "0xduo/vulnado",
+		GitAction:      api.GitCommitBranch,
+		ScanTitle:      "Test Commit",
+		CommitBranch:   "main",
+		CommitHash:     "891832b2fdecb72c444af1a6676eba6eb40435ab",
+		TargetBranch:   "",
+		MergeRequestId: "",
+		Scanner:        "semgrep",
+		Type:           api.ScanSAST,
+		JobUrl:         "https://gitlab.com/0xduo/vulnado/-/jobs/8241092355",
+		IsDefault:      api.Ptr(isDefault),
+	})
+	if err != nil {
+		logger.Error(err.Error())
+		return
+	}
+	logger.Info(scan.ScanId)
+}
 func TestScanSAST(t *testing.T) {
 	client, err := api.NewClient("http://localhost:5272", "4084269e05de4cddacb3ef4f9333848e51b7d36b610441919080b0dfde6888f8")
 	if err != nil {
@@ -27,7 +56,7 @@ func TestScanSAST(t *testing.T) {
 		Scanner:        "semgrep",
 		Type:           api.ScanSAST,
 		JobUrl:         "https://gitlab.com/0xduo/vulnado/-/jobs/8241092355",
-		IsDefault:      true,
+		IsDefault:      api.Ptr(true),
 	})
 	if err != nil {
 		t.Fatal(err.Error())
