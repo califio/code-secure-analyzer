@@ -19,8 +19,9 @@ type FindingResponse[T any] struct {
 }
 
 type Handler[T any] interface {
-	HandleFindings(sourceManager git.SourceManager, findings []T)
 	InitScan(sourceManager git.SourceManager, scanner string)
+	HandleFindings(sourceManager git.SourceManager, findings []T)
+	CompletedScan()
 }
 
 func GetSASTHandler() Handler[finding.SASTFinding] {

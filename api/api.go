@@ -39,7 +39,15 @@ func (client *Client) TestConnection() bool {
 		return false
 	}
 	res, err := client.do(req, nil)
-	return err == nil && res.StatusCode == 200
+	if err != nil {
+		logger.Error(err.Error())
+		return false
+	}
+	if res.StatusCode == 403 || res.StatusCode == 401 {
+		logger.Error("Token is invalid")
+		return false
+	}
+	return res.StatusCode == 200
 }
 
 func (client *Client) InitScan(request *CiScanRequest) (*ScanInfo, error) {

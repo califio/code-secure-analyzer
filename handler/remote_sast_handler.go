@@ -107,3 +107,13 @@ func (handler *RemoteSASTHandler) InitScan(sourceManager git.SourceManager, scan
 		logger.Error(err.Error())
 	}
 }
+
+func (handler *RemoteSASTHandler) CompletedScan() {
+	err := handler.client.UpdateScan(handler.scanId, api.UpdateCIScanRequest{
+		Status:      api.Ptr(api.StatusCompleted),
+		Description: nil,
+	})
+	if err != nil {
+		logger.Error(err.Error())
+	}
+}

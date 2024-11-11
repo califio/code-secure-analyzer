@@ -18,12 +18,16 @@ func (handler *LocalSASTHandler) InitScan(sourceManager git.SourceManager, scann
 
 func (handler *LocalSASTHandler) HandleFindings(sourceManager git.SourceManager, findings []finding.SASTFinding) {
 	if sourceManager == nil {
-		logger.Warn("There is no source manager (GitLab, GitHub, vv)")
+		logger.Warn("there is no source manager (GitLab, GitHub, vv)")
 	}
 	if len(findings) > 0 {
-		logger.Warn(fmt.Sprintf("There are %d new findings", len(findings)))
+		logger.Warn(fmt.Sprintf("there are %d new findings", len(findings)))
 		PrintSASTFindings(findings)
 	} else {
-		logger.Info("There are no new findings")
+		logger.Info("there are no new findings")
 	}
+}
+
+func (handler *LocalSASTHandler) CompletedScan() {
+	logger.Info("scan completed")
 }

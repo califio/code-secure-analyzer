@@ -65,9 +65,20 @@ func (analyzer *Analyzer[T]) Scan() []T {
 }
 
 func (analyzer *Analyzer[T]) Run() {
-	findings := analyzer.Scan()
+	if analyzer.scanner == nil {
+		logger.Fatal("there is no scanner")
+	}
+	if analyzer.handler == nil {
+		logger.Fatal("there is no handler")
+	}
+	analyzer.initSourceManager()
+	analyzer.handler.InitScan(analyzer.sourceManager, analyzer.scanner.Name())
+	findings, err := analyzer.scanner.Scan()
+	if err != nil {
+		logger.Fatal(err.Error())
+	}
 	analyzer.handler.HandleFindings(analyzer.sourceManager, findings)
-
+	analyzer.handler.CompletedScan()
 }
 
 func (analyzer *Analyzer[T]) HandleFindings(findings []T) {

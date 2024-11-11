@@ -30,12 +30,12 @@ func TestScanSAST(t *testing.T) {
 		IsDefault:      true,
 	})
 	if err != nil {
-		logger.Error(err.Error())
-		t.Fail()
+		t.Fatal(err.Error())
 	}
 	if scan == nil || scan.ScanId == "" {
-		t.Fail()
+		t.Fatal()
 	}
+
 	findings := []finding.SASTFinding{
 		finding.SASTFinding{
 			RuleID:         "rule-test-02",
@@ -74,15 +74,13 @@ func TestScanSAST(t *testing.T) {
 	}
 	_, err = client.UploadSASTFinding(scan.ScanId, findings)
 	if err != nil {
-		logger.Error(err.Error())
-		t.Fail()
+		t.Fatal(err.Error())
 	}
 	err = client.UpdateScan(scan.ScanId, api.UpdateCIScanRequest{
 		Status:      api.Ptr(api.StatusCompleted),
 		Description: nil,
 	})
 	if err != nil {
-		logger.Error(err.Error())
-		t.Fail()
+		t.Fatal(err.Error())
 	}
 }

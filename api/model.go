@@ -3,20 +3,20 @@ package api
 import "gitlab.com/code-secure/analyzer/finding"
 
 type CiScanRequest struct {
-	Source         string `json:"source,omitempty"`
-	RepoId         string `json:"repoId,omitempty"`
-	RepoUrl        string `json:"repoUrl,omitempty"`
-	RepoName       string `json:"repoName,omitempty"`
-	GitAction      string `json:"gitAction,omitempty"`
-	ScanTitle      string `json:"scanTitle,omitempty"`
-	CommitHash     string `json:"commitHash,omitempty"`
-	CommitBranch   string `json:"commitBranch,omitempty"`
-	TargetBranch   string `json:"targetBranch,omitempty"`
-	MergeRequestId string `json:"mergeRequestId,omitempty"`
-	Scanner        string `json:"scanner,omitempty"`
-	Type           string `json:"type,omitempty"`
-	JobUrl         string `json:"jobUrl,omitempty"`
-	IsDefault      bool   `json:"isDefault,omitempty"`
+	Source         string `json:"source"`
+	RepoId         string `json:"repoId"`
+	RepoUrl        string `json:"repoUrl"`
+	RepoName       string `json:"repoName"`
+	GitAction      string `json:"gitAction"`
+	ScanTitle      string `json:"scanTitle"`
+	CommitHash     string `json:"commitHash"`
+	CommitBranch   string `json:"commitBranch"`
+	TargetBranch   string `json:"targetBranch"`
+	MergeRequestId string `json:"mergeRequestId"`
+	Scanner        string `json:"scanner"`
+	Type           string `json:"type"`
+	JobUrl         string `json:"jobUrl"`
+	IsDefault      bool   `json:"isDefault"`
 }
 
 type ScanInfo struct {
