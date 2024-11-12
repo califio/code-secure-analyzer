@@ -86,6 +86,7 @@ func (handler *RemoteSASTHandler) InitScan(sourceManager git.SourceManager, scan
 		gitAction = api.GitCommitBranch
 	}
 	if sourceManager.CommitTag() != "" {
+		commitBranch = sourceManager.CommitTag()
 		gitAction = api.GitCommitTag
 	}
 	mergeRequest := sourceManager.MergeRequest()
