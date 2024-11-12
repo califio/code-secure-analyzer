@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/fatih/color"
 	"github.com/rodaine/table"
-	"gitlab.com/code-secure/analyzer/api"
 	"gitlab.com/code-secure/analyzer/finding"
 	"gitlab.com/code-secure/analyzer/git"
 	"gitlab.com/code-secure/analyzer/logger"
@@ -29,13 +28,12 @@ func GetSASTHandler() Handler[finding.SASTFinding] {
 	apiKey := os.Getenv("CODE_SECURE_TOKEN")
 	remoteServer := os.Getenv("CODE_SECURE_SERVER")
 	if apiKey != "" && remoteServer != "" {
-		apiClient, err := api.NewClient(remoteServer, apiKey)
+		handler, err := NewRemoteSASTHandler(remoteServer, apiKey)
 		if err != nil {
 			logger.Error(err.Error())
+			os.Exit(1)
 		}
-		if err == nil && apiClient.TestConnection() {
-			return NewRemoteSASTHandler(apiClient)
-		}
+		return handler
 	}
 	return NewLocalSASTHandler()
 }

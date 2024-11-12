@@ -24,10 +24,11 @@ type ScanInfo struct {
 }
 
 type UploadSASTFindingResponse struct {
-	NewFindings       []finding.SASTFinding
-	ConfirmedFindings []finding.SASTFinding
-	OpenFindings      []finding.SASTFinding
-	FixedFindings     []finding.SASTFinding
+	NewFindings       []finding.SASTFinding `json:"newFindings,omitempty"`
+	ConfirmedFindings []finding.SASTFinding `json:"confirmedFindings,omitempty"`
+	OpenFindings      []finding.SASTFinding `json:"openFindings,omitempty"`
+	FixedFindings     []finding.SASTFinding `json:"fixedFindings,omitempty"`
+	IsBlock           bool                  `json:"isBlock,omitempty"`
 }
 
 type UploadSASTFindingRequest struct {

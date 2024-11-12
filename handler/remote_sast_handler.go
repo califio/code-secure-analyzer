@@ -1,20 +1,33 @@
 package handler
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"gitlab.com/code-secure/analyzer/api"
 	"gitlab.com/code-secure/analyzer/finding"
 	"gitlab.com/code-secure/analyzer/git"
 	"gitlab.com/code-secure/analyzer/logger"
+	"os"
 )
 
 type RemoteSASTHandler struct {
-	scanId string
-	client *api.Client
+	server  string
+	token   string
+	scanId  string
+	isBlock bool
+	client  *api.Client
 }
 
-func NewRemoteSASTHandler(client *api.Client) *RemoteSASTHandler {
-	return &RemoteSASTHandler{client: client}
+func NewRemoteSASTHandler(codeSecureServer, codeSecureToken string) (*RemoteSASTHandler, error) {
+	apiClient, err := api.NewClient(codeSecureServer, codeSecureToken)
+	if err != nil {
+		return nil, err
+	}
+	if apiClient.TestConnection() {
+		return &RemoteSASTHandler{server: codeSecureServer, token: codeSecureToken, client: apiClient, isBlock: false}, nil
+	}
+	return nil, errors.New("failed to connect to remote server")
 }
 
 func (handler *RemoteSASTHandler) HandleFindings(sourceManager git.SourceManager, findings []finding.SASTFinding) {
@@ -51,7 +64,8 @@ func (handler *RemoteSASTHandler) HandleFindings(sourceManager git.SourceManager
 		mergeRequest := sourceManager.MergeRequest()
 		if mergeRequest != nil {
 			if len(response.NewFindings) > 0 {
-				err := sourceManager.CommentSASTFindingOnMergeRequest(findings, mergeRequest)
+				ctx := context.WithValue(context.Background(), "server", handler.server)
+				err := sourceManager.CommentSASTFindingOnMergeRequest(ctx, findings, mergeRequest)
 				if err != nil {
 					logger.Error("Comment on merge request error")
 					logger.Error(err.Error())
@@ -59,6 +73,7 @@ func (handler *RemoteSASTHandler) HandleFindings(sourceManager git.SourceManager
 			}
 		}
 	}
+	handler.isBlock = response.IsBlock
 }
 
 func (handler *RemoteSASTHandler) InitScan(sourceManager git.SourceManager, scanner string) {
@@ -116,5 +131,9 @@ func (handler *RemoteSASTHandler) CompletedScan() {
 	})
 	if err != nil {
 		logger.Error(err.Error())
+	}
+	if handler.isBlock {
+		logger.Info(fmt.Sprintf("block due security config"))
+		os.Exit(1)
 	}
 }

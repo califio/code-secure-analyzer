@@ -1,6 +1,9 @@
 package git
 
-import "gitlab.com/code-secure/analyzer/finding"
+import (
+	"context"
+	"gitlab.com/code-secure/analyzer/finding"
+)
 
 type MergeRequest struct {
 	SourceBranch      string
@@ -25,5 +28,5 @@ type SourceManager interface {
 	CommitTitle() string
 	DefaultBranch() string
 	JobURL() string
-	CommentSASTFindingOnMergeRequest(findings []finding.SASTFinding, mr *MergeRequest) error
+	CommentSASTFindingOnMergeRequest(context context.Context, findings []finding.SASTFinding, mr *MergeRequest) error
 }

@@ -16,13 +16,14 @@ func (l *Location) String() string {
 }
 
 type SASTFinding struct {
-	RuleID         string     `json:"ruleId,omitempty"`
-	Identity       string     `json:"identity,omitempty"`
-	Name           string     `json:"name,omitempty"`
-	Description    string     `json:"description,omitempty"`
-	Category       string     `json:"category,omitempty"`
-	Recommendation string     `json:"recommendation,omitempty"`
-	Severity       string     `json:"severity,omitempty"`
-	Location       *Location  `json:"location,omitempty"`
-	FindingFlow    []Location `json:"findingFlow,omitempty"`
+	ID             string     `json:"id,omitempty"`
+	RuleID         string     `json:"ruleId,omitempty" json:"ruleID,omitempty"`
+	Identity       string     `json:"identity,omitempty" json:"identity,omitempty"`
+	Name           string     `json:"name,omitempty" json:"name,omitempty"`
+	Description    string     `json:"description,omitempty" json:"description,omitempty"`
+	Category       string     `json:"category,omitempty" json:"category,omitempty"`
+	Recommendation string     `json:"recommendation,omitempty" json:"recommendation,omitempty"`
+	Severity       string     `json:"severity,omitempty" json:"severity,omitempty"`
+	Location       *Location  `json:"location,omitempty" json:"location,omitempty"`
+	FindingFlow    []Location `json:"findingFlow,omitempty" json:"findingFlow,omitempty"`
 }
