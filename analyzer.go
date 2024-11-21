@@ -69,7 +69,11 @@ func (analyzer *SASTAnalyzer) Run() {
 	if err != nil {
 		logger.Fatal(err.Error())
 	}
-	analyzer.handler.HandleSAST(analyzer.sourceManager, result)
+	if result != nil {
+		analyzer.handler.HandleSAST(analyzer.sourceManager, *result)
+	} else {
+		logger.Error("SAST result nil")
+	}
 	analyzer.handler.CompletedScan()
 }
 
@@ -113,7 +117,11 @@ func (analyzer *DependencyAnalyzer) Run() {
 	if err != nil {
 		logger.Fatal(err.Error())
 	}
-	analyzer.handler.HandleDependency(analyzer.sourceManager, result)
+	if result != nil {
+		analyzer.handler.HandleDependency(analyzer.sourceManager, *result)
+	} else {
+		logger.Error("Dependency result nil")
+	}
 	analyzer.handler.CompletedScan()
 }
 
