@@ -1,7 +1,7 @@
 package sarif
 
 import (
-	"gitlab.com/code-secure/analyzer/finding"
+	"gitlab.com/code-secure/analyzer"
 	"regexp"
 	"strings"
 )
@@ -64,7 +64,7 @@ type Result struct {
 	} `json:"suppressions,omitempty"`
 }
 
-func (result *Result) GetCodeFlow() []finding.Location {
+func (result *Result) GetCodeFlow() []analyzer.FindingLocation {
 	if result.CodeFlows == nil || len(result.CodeFlows) == 0 {
 		return nil
 	}
@@ -72,7 +72,7 @@ func (result *Result) GetCodeFlow() []finding.Location {
 	if len(threadFlows) == 0 {
 		return nil
 	}
-	var locations []finding.Location
+	var locations []analyzer.FindingLocation
 	for _, location := range threadFlows[0].Locations {
 		/*
 			need to parse message to find real location
@@ -84,7 +84,7 @@ func (result *Result) GetCodeFlow() []finding.Location {
 		if path == "" {
 			path = physical.ArtifactLocation.Uri
 		}
-		locations = append(locations, finding.Location{
+		locations = append(locations, analyzer.FindingLocation{
 			Path:        path,
 			Snippet:     physical.Region.Snippet.Text,
 			StartLine:   physical.Region.StartLine,
@@ -114,16 +114,16 @@ type physicalLocation struct {
 		Uri string `json:"uri"`
 	} `json:"artifactLocation"`
 	Region struct {
-		EndColumn int `json:"endColumn"`
-		EndLine   int `json:"endLine"`
+		EndColumn *int `json:"endColumn"`
+		EndLine   *int `json:"endLine"`
 		Message   struct {
 			Text string `json:"text"`
 		} `json:"message"`
 		Snippet struct {
 			Text string `json:"text"`
 		} `json:"snippet"`
-		StartColumn int `json:"startColumn"`
-		StartLine   int `json:"startLine"`
+		StartColumn *int `json:"startColumn"`
+		StartLine   *int `json:"startLine"`
 	} `json:"region"`
 }
 

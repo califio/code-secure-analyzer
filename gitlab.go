@@ -1,10 +1,9 @@
-package git
+package analyzer
 
 import (
 	"context"
 	"fmt"
 	"github.com/xanzy/go-gitlab"
-	"gitlab.com/code-secure/analyzer/finding"
 	"gitlab.com/code-secure/analyzer/logger"
 	"os"
 	"strconv"
@@ -34,7 +33,7 @@ type Gitlab struct {
 func (g *Gitlab) Name() string {
 	return "GitLab"
 }
-func (g *Gitlab) CommentSASTFindingOnMergeRequest(context context.Context, findings []finding.SASTFinding, mergeRequest *MergeRequest) error {
+func (g *Gitlab) CommentFindingOnMergeRequest(context context.Context, findings []Finding, mergeRequest *MergeRequest) error {
 	projectID := g.ProjectID()
 	// Merge Request IID (not the project-wide MR ID)
 	mergeRequestID, _ := strconv.Atoi(mergeRequest.MergeRequestID)
@@ -59,15 +58,18 @@ func (g *Gitlab) CommentSASTFindingOnMergeRequest(context context.Context, findi
 		if location != nil {
 			locationUrl := fmt.Sprintf("%s/-/blob/%s/%s#L%d", projectUrl, commitSha, location.Path, location.StartLine)
 			remoteFindingUrl := fmt.Sprintf("%s/#/finding/%s", context.Value("server"), f.ID)
-			msg := fmt.Sprintf("**[%s](%s)**\n\n**Location:** `%s` @ [%s](%s)\n\n**Description**\n\n%s", f.Name, remoteFindingUrl, location.Snippet, location.Path, locationUrl, f.Description)
-			if len(f.FindingFlow) > 0 {
+			msg := fmt.Sprintf("**[%s](%s)**\n\n**FindingLocation:** `%s` @ [%s](%s)\n\n**Description**\n\n%s", f.Name, remoteFindingUrl, location.Snippet, location.Path, locationUrl, f.Description)
+			if f.Recommendation != "" {
+				msg += fmt.Sprintf("\n\n**Recommendation**\n\n %s", f.Recommendation)
+			}
+			if f.Metadata != nil && len(f.Metadata.FindingFlow) > 0 {
 				flow := ""
-				for index, step := range f.FindingFlow {
+				for index, step := range f.Metadata.FindingFlow {
 					url := fmt.Sprintf("%s/-/blob/%s/%s#L%d", projectUrl, commitSha, step.Path, step.StartLine)
 					flow += fmt.Sprintf("%d. `%s` @ [%s](%s)\n", index+1, step.Snippet, step.Path, url)
 				}
-				codeFlow := fmt.Sprintf("<details>\n<summary>Finding Flow</summary>\n\n%s\n</details>", flow)
-				msg += "\n\n" + codeFlow
+				codeFlow := fmt.Sprintf("\n\n<details>\n<summary>Finding Flow</summary>\n\n%s\n</details>", flow)
+				msg += codeFlow
 			}
 			position := gitlab.PositionOptions{
 				BaseSHA:      &mr.DiffRefs.BaseSha,
@@ -76,8 +78,8 @@ func (g *Gitlab) CommentSASTFindingOnMergeRequest(context context.Context, findi
 				OldPath:      &location.Path,
 				NewPath:      &location.Path,
 				PositionType: gitlab.Ptr("text"),
-				NewLine:      &location.StartLine,
-				OldLine:      &location.StartLine,
+				NewLine:      location.StartLine,
+				OldLine:      location.StartLine,
 			}
 			_, res, err := g.client.Discussions.CreateMergeRequestDiscussion(
 				projectID,
@@ -169,13 +171,16 @@ func (g *Gitlab) JobURL() string {
 	return os.Getenv("CI_JOB_URL")
 }
 
-func getLocation(finding finding.SASTFinding, mPath map[string]bool) *finding.Location {
+func getLocation(finding Finding, mPath map[string]bool) *FindingLocation {
 	if mPath[finding.Location.Path] {
 		return finding.Location
 	}
-	for i := len(finding.FindingFlow) - 1; i >= 0; i-- {
-		if mPath[finding.FindingFlow[i].Path] {
-			return &finding.FindingFlow[i]
+	if finding.Metadata == nil {
+		return nil
+	}
+	for i := len(finding.Metadata.FindingFlow) - 1; i >= 0; i-- {
+		if mPath[finding.Metadata.FindingFlow[i].Path] {
+			return &finding.Metadata.FindingFlow[i]
 		}
 	}
 	return nil

@@ -1,11 +1,10 @@
-package api
+package analyzer
 
 import (
 	"encoding/json"
 	"errors"
 	"github.com/google/go-querystring/query"
 	"github.com/hashicorp/go-retryablehttp"
-	"gitlab.com/code-secure/analyzer/finding"
 	"gitlab.com/code-secure/analyzer/logger"
 	"io"
 	"net/http"
@@ -63,16 +62,25 @@ func (client *Client) InitScan(request *CiScanRequest) (*ScanInfo, error) {
 	return &scanInfo, nil
 }
 
-func (client *Client) UploadSASTFinding(scanId string, findings []finding.SASTFinding) (*UploadSASTFindingResponse, error) {
-	body := UploadSASTFindingRequest{
-		ScanId:   scanId,
-		Findings: findings,
-	}
-	req, err := client.newRequest(http.MethodPost, "api/ci/sast-finding", &body)
+func (client *Client) UploadFinding(request UploadFindingRequest) (*UploadFindingResponse, error) {
+	req, err := client.newRequest(http.MethodPost, "api/ci/finding", &request)
 	if err != nil {
 		return nil, err
 	}
-	var response UploadSASTFindingResponse
+	var response UploadFindingResponse
+	_, err = client.do(req, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+func (client *Client) UploadDependency(request UploadDependencyRequest) (*UploadFindingResponse, error) {
+	req, err := client.newRequest(http.MethodPost, "api/ci/dependency", &request)
+	if err != nil {
+		return nil, err
+	}
+	var response UploadFindingResponse
 	_, err = client.do(req, &response)
 	if err != nil {
 		return nil, err

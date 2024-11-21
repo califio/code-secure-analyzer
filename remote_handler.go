@@ -1,37 +1,50 @@
-package handler
+package analyzer
 
 import (
 	"context"
 	"errors"
 	"fmt"
-	"gitlab.com/code-secure/analyzer/api"
-	"gitlab.com/code-secure/analyzer/finding"
-	"gitlab.com/code-secure/analyzer/git"
 	"gitlab.com/code-secure/analyzer/logger"
 	"os"
 )
 
-type RemoteSASTHandler struct {
+type RemoteHandler struct {
 	server  string
 	token   string
 	scanId  string
 	isBlock bool
-	client  *api.Client
+	client  *Client
 }
 
-func NewRemoteSASTHandler(codeSecureServer, codeSecureToken string) (*RemoteSASTHandler, error) {
-	apiClient, err := api.NewClient(codeSecureServer, codeSecureToken)
+func NewRemoteHandler(codeSecureServer, codeSecureToken string) (*RemoteHandler, error) {
+	apiClient, err := NewClient(codeSecureServer, codeSecureToken)
 	if err != nil {
 		return nil, err
 	}
 	if apiClient.TestConnection() {
-		return &RemoteSASTHandler{server: codeSecureServer, token: codeSecureToken, client: apiClient, isBlock: false}, nil
+		return &RemoteHandler{server: codeSecureServer, token: codeSecureToken, client: apiClient, isBlock: false}, nil
 	}
 	return nil, errors.New("failed to connect to remote server")
 }
 
-func (handler *RemoteSASTHandler) HandleFindings(sourceManager git.SourceManager, findings []finding.SASTFinding) {
-	response, err := handler.client.UploadSASTFinding(handler.scanId, findings)
+func (handler *RemoteHandler) HandleDependency(sourceManager SourceManager, result SCAResult) {
+	_, err := handler.client.UploadDependency(UploadDependencyRequest{
+		ScanId:              handler.scanId,
+		Packages:            result.Packages,
+		PackageDependencies: result.PackageDependencies,
+		Vulnerabilities:     result.Vulnerabilities,
+	})
+	if err != nil {
+		logger.Error(err.Error())
+		return
+	}
+}
+
+func (handler *RemoteHandler) HandleSAST(sourceManager SourceManager, result SASTResult) {
+	response, err := handler.client.UploadFinding(UploadFindingRequest{
+		ScanId:   handler.scanId,
+		Findings: result.Findings,
+	})
 	if err != nil {
 		logger.Error(err.Error())
 		return
@@ -41,22 +54,22 @@ func (handler *RemoteSASTHandler) HandleFindings(sourceManager git.SourceManager
 	}
 	if len(response.NewFindings) > 0 {
 		logger.Warn(fmt.Sprintf("There are %d new findings", len(response.NewFindings)))
-		PrintSASTFindings(response.NewFindings)
+		PrintFindings(response.NewFindings)
 	}
 
 	if len(response.FixedFindings) > 0 {
 		logger.Info(fmt.Sprintf("There are %d findings that have been fixed", len(response.FixedFindings)))
-		PrintSASTFindings(response.FixedFindings)
+		PrintFindings(response.FixedFindings)
 	}
 
 	if len(response.ConfirmedFindings) > 0 {
 		logger.Info(fmt.Sprintf("There are still %d findings not yet fixed", len(response.ConfirmedFindings)))
-		PrintSASTFindings(response.ConfirmedFindings)
+		PrintFindings(response.ConfirmedFindings)
 	}
 
 	if len(response.OpenFindings) > 0 {
 		logger.Info(fmt.Sprintf("There are %d findings need to verify", len(response.OpenFindings)))
-		PrintSASTFindings(response.OpenFindings)
+		PrintFindings(response.OpenFindings)
 	}
 
 	if sourceManager != nil {
@@ -65,7 +78,7 @@ func (handler *RemoteSASTHandler) HandleFindings(sourceManager git.SourceManager
 		if mergeRequest != nil {
 			if len(response.NewFindings) > 0 {
 				ctx := context.WithValue(context.Background(), "server", handler.server)
-				err := sourceManager.CommentSASTFindingOnMergeRequest(ctx, findings, mergeRequest)
+				err := sourceManager.CommentFindingOnMergeRequest(ctx, response.NewFindings, mergeRequest)
 				if err != nil {
 					logger.Error("Comment on merge request error")
 					logger.Error(err.Error())
@@ -76,22 +89,22 @@ func (handler *RemoteSASTHandler) HandleFindings(sourceManager git.SourceManager
 	handler.isBlock = response.IsBlock
 }
 
-func (handler *RemoteSASTHandler) InitScan(sourceManager git.SourceManager, scanner string) {
-	gitAction := api.GitCommitBranch
+func (handler *RemoteHandler) InitScan(sourceManager SourceManager, scannerName string, scannerType string) {
+	gitAction := GitCommitBranch
 	scanTitle := sourceManager.CommitTitle()
 	commitBranch := sourceManager.CommitBranch()
 	targetBranch := ""
 	mergeRequestId := ""
 	if sourceManager.CommitBranch() != "" {
-		gitAction = api.GitCommitBranch
+		gitAction = GitCommitBranch
 	}
 	if sourceManager.CommitTag() != "" {
 		commitBranch = sourceManager.CommitTag()
-		gitAction = api.GitCommitTag
+		gitAction = GitCommitTag
 	}
 	mergeRequest := sourceManager.MergeRequest()
 	if mergeRequest != nil {
-		gitAction = api.GitMergeRequest
+		gitAction = GitMergeRequest
 		scanTitle = mergeRequest.MergeRequestTitle
 		commitBranch = mergeRequest.SourceBranch
 		targetBranch = mergeRequest.TargetBranch
@@ -99,7 +112,7 @@ func (handler *RemoteSASTHandler) InitScan(sourceManager git.SourceManager, scan
 	}
 	repoName := sourceManager.ProjectGroup() + "/" + sourceManager.ProjectName()
 	isDefault := commitBranch == sourceManager.DefaultBranch()
-	body := api.CiScanRequest{
+	body := CiScanRequest{
 		Source:         sourceManager.Name(),
 		RepoId:         sourceManager.ProjectID(),
 		RepoUrl:        sourceManager.ProjectURL(),
@@ -110,10 +123,10 @@ func (handler *RemoteSASTHandler) InitScan(sourceManager git.SourceManager, scan
 		CommitHash:     sourceManager.CommitHash(),
 		TargetBranch:   targetBranch,
 		MergeRequestId: mergeRequestId,
-		Scanner:        scanner,
-		Type:           api.ScanSAST,
+		Scanner:        scannerName,
+		Type:           scannerType,
 		JobUrl:         sourceManager.JobURL(),
-		IsDefault:      api.Ptr(isDefault),
+		IsDefault:      Ptr(isDefault),
 	}
 	scanInfo, err := handler.client.InitScan(&body)
 	if scanInfo != nil {
@@ -125,9 +138,9 @@ func (handler *RemoteSASTHandler) InitScan(sourceManager git.SourceManager, scan
 	}
 }
 
-func (handler *RemoteSASTHandler) CompletedScan() {
-	err := handler.client.UpdateScan(handler.scanId, api.UpdateCIScanRequest{
-		Status:      api.Ptr(api.StatusCompleted),
+func (handler *RemoteHandler) CompletedScan() {
+	err := handler.client.UpdateScan(handler.scanId, UpdateCIScanRequest{
+		Status:      Ptr(StatusCompleted),
 		Description: nil,
 	})
 	if err != nil {
