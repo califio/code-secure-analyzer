@@ -12,10 +12,10 @@ type SCAResult struct {
 
 type SASTScanner interface {
 	Name() string
-	Scan() (SASTResult, error)
+	Scan() (*SASTResult, error)
 }
 
 type DependencyScanner interface {
 	Name() string
-	Scan() (SCAResult, error)
+	Scan() (*SCAResult, error)
 }
