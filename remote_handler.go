@@ -28,7 +28,7 @@ func NewRemoteHandler(codeSecureServer, codeSecureToken string) (*RemoteHandler,
 }
 
 func (handler *RemoteHandler) HandleDependency(sourceManager SourceManager, result SCAResult) {
-	_, err := handler.client.UploadDependency(UploadDependencyRequest{
+	response, err := handler.client.UploadDependency(UploadDependencyRequest{
 		ScanId:              handler.scanId,
 		Packages:            result.Packages,
 		PackageDependencies: result.PackageDependencies,
@@ -38,6 +38,7 @@ func (handler *RemoteHandler) HandleDependency(sourceManager SourceManager, resu
 		logger.Error(err.Error())
 		return
 	}
+	handler.isBlock = response.IsBlock
 }
 
 func (handler *RemoteHandler) HandleSAST(sourceManager SourceManager, result SASTResult) {

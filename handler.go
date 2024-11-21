@@ -31,7 +31,7 @@ func GetHandler() Handler {
 }
 
 func PrintFindings(findings []Finding) {
-	tbl := table.New("ID", "Name", "Severity", "FindingLocation")
+	tbl := table.New("ID", "Name", "Severity", "Location")
 
 	tbl.WithHeaderFormatter(color.New(color.FgGreen, color.Underline).SprintfFunc()).
 		WithFirstColumnFormatter(color.New(color.FgYellow).SprintfFunc())
