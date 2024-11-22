@@ -9,9 +9,9 @@ import (
 )
 
 type Handler interface {
-	InitScan(source SourceManager, scannerName string, scannerType string)
-	HandleSAST(sourceManager SourceManager, result SASTResult)
-	HandleDependency(sourceManager SourceManager, result SCAResult)
+	InitScan(source SourceManager, scannerName string, scannerType ScannerType)
+	HandleFindings(sourceManager SourceManager, result FindingResult)
+	HandleSCA(sourceManager SourceManager, result SCAResult)
 	CompletedScan()
 }
 

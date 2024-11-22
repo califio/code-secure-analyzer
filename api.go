@@ -38,25 +38,25 @@ type UploadDependencyResponse struct {
 }
 
 type CiScanRequest struct {
-	Source         string `json:"source"`
-	RepoId         string `json:"repoId"`
-	RepoUrl        string `json:"repoUrl"`
-	RepoName       string `json:"repoName"`
-	GitAction      string `json:"gitAction"`
-	ScanTitle      string `json:"scanTitle"`
-	CommitHash     string `json:"commitHash"`
-	CommitBranch   string `json:"commitBranch"`
-	TargetBranch   string `json:"targetBranch"`
-	MergeRequestId string `json:"mergeRequestId"`
-	Scanner        string `json:"scanner"`
-	Type           string `json:"type"`
-	JobUrl         string `json:"jobUrl"`
-	IsDefault      *bool  `json:"isDefault"`
+	Source         string      `json:"source"`
+	RepoId         string      `json:"repoId"`
+	RepoUrl        string      `json:"repoUrl"`
+	RepoName       string      `json:"repoName"`
+	GitAction      GitAction   `json:"gitAction"`
+	ScanTitle      string      `json:"scanTitle"`
+	CommitHash     string      `json:"commitHash"`
+	CommitBranch   string      `json:"commitBranch"`
+	TargetBranch   string      `json:"targetBranch"`
+	MergeRequestId string      `json:"mergeRequestId"`
+	Scanner        string      `json:"scanner"`
+	Type           ScannerType `json:"type"`
+	JobUrl         string      `json:"jobUrl"`
+	IsDefault      *bool       `json:"isDefault"`
 }
 
 type UpdateCIScanRequest struct {
-	Status      *string `json:"status,omitempty"`
-	Description *string `json:"description,omitempty"`
+	Status      *ScanStatus `json:"status,omitempty"`
+	Description *string     `json:"description,omitempty"`
 }
 
 type ScanInfo struct {

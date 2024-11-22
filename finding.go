@@ -30,7 +30,7 @@ type Finding struct {
 	Description    string           `json:"description,omitempty" json:"description,omitempty"`
 	Category       string           `json:"category,omitempty" json:"category,omitempty"`
 	Recommendation string           `json:"recommendation,omitempty" json:"recommendation,omitempty"`
-	Severity       string           `json:"severity,omitempty" json:"severity,omitempty"`
+	Severity       Severity         `json:"severity,omitempty" json:"severity,omitempty"`
 	Location       *FindingLocation `json:"location,omitempty" json:"location,omitempty"`
 	Metadata       *FindingMetadata `json:"metadata,omitempty" json:"metadata,omitempty"`
 }

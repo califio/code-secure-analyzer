@@ -1,34 +1,27 @@
 package analyzer
 
-// git action
+type GitAction string
+
 const (
-	GitCommitBranch = "CommitBranch"
-	GitMergeRequest = "MergeRequest"
-	GitCommitTag    = "CommitTag"
+	GitCommitBranch GitAction = "CommitBranch"
+	GitMergeRequest GitAction = "MergeRequest"
+	GitCommitTag    GitAction = "CommitTag"
 )
 
-// scanner
+type Severity string
+
 const (
-	Sast            = "Sast"
-	Dast            = "Dast"
-	Iast            = "Iast"
-	Dependency      = "Dependency"
-	Container       = "Container"
-	SecretDetection = "Secret"
+	SeverityCritical Severity = "Critical"
+	SeverityHigh     Severity = "High"
+	SeverityMedium   Severity = "Medium"
+	SeverityLow      Severity = "Low"
+	SeverityInfo     Severity = "Info"
 )
 
-// severity
-const (
-	SeverityCritical = "Critical"
-	SeverityHigh     = "High"
-	SeverityMedium   = "Medium"
-	SeverityLow      = "Low"
-	SeverityInfo     = "Info"
-)
+type ScanStatus string
 
-// scan status
 const (
-	StatusCompleted = "Completed"
-	StatusRunning   = "Running"
-	StatusError     = "Error"
+	StatusCompleted ScanStatus = "Completed"
+	StatusRunning   ScanStatus = "Running"
+	StatusError     ScanStatus = "Error"
 )

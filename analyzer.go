@@ -40,17 +40,17 @@ func (analyzer *Analyzer) detectSourceManager() {
 	logger.Fatal("there is no source manager")
 }
 
-// SASTAnalyzer start
-type SASTAnalyzer struct {
+// FindingAnalyzer start
+type FindingAnalyzer struct {
 	Analyzer
-	scanner SASTScanner
+	scanner FindingScanner
 }
 
-func (analyzer *SASTAnalyzer) RegisterScanner(scanner SASTScanner) {
+func (analyzer *FindingAnalyzer) RegisterScanner(scanner FindingScanner) {
 	analyzer.scanner = scanner
 }
 
-func (analyzer *SASTAnalyzer) Run() {
+func (analyzer *FindingAnalyzer) Run() {
 	if analyzer.scanner == nil {
 		logger.Fatal("there is no scanner")
 	}
@@ -64,21 +64,21 @@ func (analyzer *SASTAnalyzer) Run() {
 		analyzer.initDefaultSourceManager()
 	}
 	analyzer.detectSourceManager()
-	analyzer.handler.InitScan(analyzer.sourceManager, analyzer.scanner.Name(), Sast)
+	analyzer.handler.InitScan(analyzer.sourceManager, analyzer.scanner.Name(), analyzer.scanner.Type())
 	result, err := analyzer.scanner.Scan()
 	if err != nil {
 		logger.Fatal(err.Error())
 	}
 	if result != nil {
-		analyzer.handler.HandleSAST(analyzer.sourceManager, *result)
+		analyzer.handler.HandleFindings(analyzer.sourceManager, *result)
 	} else {
-		logger.Error("SAST result nil")
+		logger.Error("Finding result nil")
 	}
 	analyzer.handler.CompletedScan()
 }
 
-func NewSASTAnalyzer() *SASTAnalyzer {
-	analyzer := &SASTAnalyzer{
+func NewFindingAnalyzer() *FindingAnalyzer {
+	analyzer := &FindingAnalyzer{
 		Analyzer: Analyzer{
 			handler: GetHandler(),
 		},
@@ -88,17 +88,17 @@ func NewSASTAnalyzer() *SASTAnalyzer {
 	return analyzer
 }
 
-// DependencyAnalyzer start
-type DependencyAnalyzer struct {
+// SCAAnalyzer start
+type SCAAnalyzer struct {
 	Analyzer
-	scanner DependencyScanner
+	scanner SCAScanner
 }
 
-func (analyzer *DependencyAnalyzer) RegisterScanner(scanner DependencyScanner) {
+func (analyzer *SCAAnalyzer) RegisterScanner(scanner SCAScanner) {
 	analyzer.scanner = scanner
 }
 
-func (analyzer *DependencyAnalyzer) Run() {
+func (analyzer *SCAAnalyzer) Run() {
 	if analyzer.scanner == nil {
 		logger.Fatal("there is no scanner")
 	}
@@ -112,21 +112,21 @@ func (analyzer *DependencyAnalyzer) Run() {
 		analyzer.initDefaultSourceManager()
 	}
 	analyzer.detectSourceManager()
-	analyzer.handler.InitScan(analyzer.sourceManager, analyzer.scanner.Name(), Dependency)
+	analyzer.handler.InitScan(analyzer.sourceManager, analyzer.scanner.Name(), analyzer.scanner.Type())
 	result, err := analyzer.scanner.Scan()
 	if err != nil {
 		logger.Fatal(err.Error())
 	}
 	if result != nil {
-		analyzer.handler.HandleDependency(analyzer.sourceManager, *result)
+		analyzer.handler.HandleSCA(analyzer.sourceManager, *result)
 	} else {
-		logger.Error("Dependency result nil")
+		logger.Error("SCA result nil")
 	}
 	analyzer.handler.CompletedScan()
 }
 
-func NewDependencyAnalyzer() *DependencyAnalyzer {
-	analyzer := &DependencyAnalyzer{
+func NewSCAAnalyzer() *SCAAnalyzer {
+	analyzer := &SCAAnalyzer{
 		Analyzer: Analyzer{
 			handler: GetHandler(),
 		},

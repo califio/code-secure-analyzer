@@ -11,10 +11,10 @@ func NewLocalHandler() *LocalHandler {
 	return &LocalHandler{}
 }
 
-func (handler *LocalHandler) InitScan(sourceManager SourceManager, scannerName string, scannerType string) {
+func (handler *LocalHandler) InitScan(sourceManager SourceManager, scannerName string, scannerType ScannerType) {
 }
 
-func (handler *LocalHandler) HandleSAST(sourceManager SourceManager, result SASTResult) {
+func (handler *LocalHandler) HandleFindings(sourceManager SourceManager, result FindingResult) {
 	if sourceManager == nil {
 		logger.Warn("there is no source manager (GitLab, GitHub, vv)")
 	}
@@ -26,7 +26,7 @@ func (handler *LocalHandler) HandleSAST(sourceManager SourceManager, result SAST
 	}
 }
 
-func (handler *LocalHandler) HandleDependency(sourceManager SourceManager, result SCAResult) {
+func (handler *LocalHandler) HandleSCA(sourceManager SourceManager, result SCAResult) {
 	//todo: write something here
 }
 

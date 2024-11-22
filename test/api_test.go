@@ -8,7 +8,7 @@ import (
 
 var client, _ = analyzer.NewClient("http://localhost:5272", "962ba2f962eb4e4abb6679d3bae259906da2d320dc924cb29ed12a83a6fdfdad")
 
-var SastResult = analyzer.SASTResult{
+var SastResult = analyzer.FindingResult{
 	Findings: []analyzer.Finding{
 		analyzer.Finding{
 			RuleID:         "rule-test-02",
@@ -107,7 +107,7 @@ func TestInitScan(t *testing.T) {
 		TargetBranch:   "",
 		MergeRequestId: "",
 		Scanner:        "semgrep",
-		Type:           analyzer.Sast,
+		Type:           analyzer.ScannerTypeSast,
 		JobUrl:         "https://gitlab.com/0xduo/vulnado/-/jobs/8241092355",
 		IsDefault:      analyzer.Ptr(isDefault),
 	})
@@ -130,7 +130,7 @@ func TestScanSAST(t *testing.T) {
 		TargetBranch:   "",
 		MergeRequestId: "",
 		Scanner:        "semgrep",
-		Type:           analyzer.Sast,
+		Type:           analyzer.ScannerTypeSast,
 		JobUrl:         "https://gitlab.com/0xduo/vulnado/-/jobs/8241092355",
 		IsDefault:      analyzer.Ptr(true),
 	})
@@ -170,7 +170,7 @@ func TestScanDependency(t *testing.T) {
 		TargetBranch:   "",
 		MergeRequestId: "",
 		Scanner:        "trivy",
-		Type:           analyzer.Dependency,
+		Type:           analyzer.ScannerTypeDependency,
 		JobUrl:         "https://gitlab.com/0xduo/vulnado/-/jobs/8241092355",
 		IsDefault:      analyzer.Ptr(true),
 	})

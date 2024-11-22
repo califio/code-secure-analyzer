@@ -27,7 +27,7 @@ func NewRemoteHandler(codeSecureServer, codeSecureToken string) (*RemoteHandler,
 	return nil, errors.New("failed to connect to remote server")
 }
 
-func (handler *RemoteHandler) HandleDependency(sourceManager SourceManager, result SCAResult) {
+func (handler *RemoteHandler) HandleSCA(sourceManager SourceManager, result SCAResult) {
 	response, err := handler.client.UploadDependency(UploadDependencyRequest{
 		ScanId:              handler.scanId,
 		Packages:            result.Packages,
@@ -41,7 +41,7 @@ func (handler *RemoteHandler) HandleDependency(sourceManager SourceManager, resu
 	handler.isBlock = response.IsBlock
 }
 
-func (handler *RemoteHandler) HandleSAST(sourceManager SourceManager, result SASTResult) {
+func (handler *RemoteHandler) HandleFindings(sourceManager SourceManager, result FindingResult) {
 	response, err := handler.client.UploadFinding(UploadFindingRequest{
 		ScanId:   handler.scanId,
 		Findings: result.Findings,
@@ -90,7 +90,7 @@ func (handler *RemoteHandler) HandleSAST(sourceManager SourceManager, result SAS
 	handler.isBlock = response.IsBlock
 }
 
-func (handler *RemoteHandler) InitScan(sourceManager SourceManager, scannerName string, scannerType string) {
+func (handler *RemoteHandler) InitScan(sourceManager SourceManager, scannerName string, scannerType ScannerType) {
 	gitAction := GitCommitBranch
 	scanTitle := sourceManager.CommitTitle()
 	commitBranch := sourceManager.CommitBranch()
