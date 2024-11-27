@@ -1,7 +1,6 @@
 package analyzer
 
 import (
-	"fmt"
 	"github.com/fatih/color"
 	"github.com/rodaine/table"
 	"gitlab.com/code-secure/analyzer/logger"
@@ -36,12 +35,6 @@ func PrintFindings(findings []Finding) {
 	tbl.WithHeaderFormatter(color.New(color.FgGreen, color.Underline).SprintfFunc()).
 		WithFirstColumnFormatter(color.New(color.FgYellow).SprintfFunc())
 	for index, issue := range findings {
-		if issue.Metadata != nil && len(issue.Metadata.FindingFlow) > 0 {
-			logger.Info("code flow")
-			for _, location := range issue.Metadata.FindingFlow {
-				fmt.Println(location.Snippet + " @ " + location.String())
-			}
-		}
 		tbl.AddRow(index+1, issue.Name, issue.Severity, issue.Location.String())
 	}
 	tbl.Print()

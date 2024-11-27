@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-var client, _ = analyzer.NewClient("http://localhost:5272", "962ba2f962eb4e4abb6679d3bae259906da2d320dc924cb29ed12a83a6fdfdad")
+var client, _ = analyzer.NewClient("http://localhost:5272", "5b615904c5be41cc8af813ddee581432c818f6d9cb01475aa0ff6172c73edeb7")
 
 var SastResult = analyzer.FindingResult{
 	Findings: []analyzer.Finding{

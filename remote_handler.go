@@ -51,7 +51,7 @@ func (handler *RemoteHandler) HandleFindings(sourceManager SourceManager, result
 		logger.Error(err.Error())
 		return
 	}
-	err = saveFindingResult(response)
+	err = SaveFindingResult(*response)
 	if err != nil {
 		logger.Error(err.Error())
 	}
@@ -158,7 +158,7 @@ func (handler *RemoteHandler) CompletedScan() {
 	}
 }
 
-func saveFindingResult(result *UploadFindingResponse) error {
+func SaveFindingResult(result UploadFindingResponse) error {
 	output := "finding_results.json"
 	if os.Getenv("FINDING_OUTPUT") != "" {
 		output = os.Getenv("FINDING_OUTPUT")
@@ -167,5 +167,6 @@ func saveFindingResult(result *UploadFindingResponse) error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(output, data, 0644)
+	logger.Info("Save finding result to: " + output)
+	return os.WriteFile(output, data, 0777)
 }
