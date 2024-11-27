@@ -2,6 +2,7 @@ package analyzer
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"gitlab.com/code-secure/analyzer/logger"
@@ -49,6 +50,10 @@ func (handler *RemoteHandler) HandleFindings(sourceManager SourceManager, result
 	if err != nil {
 		logger.Error(err.Error())
 		return
+	}
+	err = saveFindingResult(response)
+	if err != nil {
+		logger.Error(err.Error())
 	}
 	if sourceManager == nil {
 		logger.Warn("there is no source manager (GitLab, GitHub, vv)")
@@ -151,4 +156,16 @@ func (handler *RemoteHandler) CompletedScan() {
 		logger.Info(fmt.Sprintf("block due security config"))
 		os.Exit(1)
 	}
+}
+
+func saveFindingResult(result *UploadFindingResponse) error {
+	output := "finding_results.json"
+	if os.Getenv("FINDING_OUTPUT") != "" {
+		output = os.Getenv("FINDING_OUTPUT")
+	}
+	data, err := json.Marshal(result)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(output, data, 0644)
 }
