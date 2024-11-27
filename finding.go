@@ -5,18 +5,18 @@ import "fmt"
 type FindingLocation struct {
 	Path        string `json:"path,omitempty"`
 	Snippet     string `json:"snippet,omitempty"`
-	StartLine   *int   `json:"startLine,omitempty"`
-	EndLine     *int   `json:"endLine,omitempty"`
-	StartColumn *int   `json:"startColumn,omitempty"`
-	EndColumn   *int   `json:"endColumn,omitempty"`
+	StartLine   int    `json:"startLine,omitempty"`
+	EndLine     int    `json:"endLine,omitempty"`
+	StartColumn int    `json:"startColumn,omitempty"`
+	EndColumn   int    `json:"endColumn,omitempty"`
 }
 
 func (l *FindingLocation) String() string {
 	result := l.Path
-	if l.StartLine != nil {
-		result += fmt.Sprintf(":%d", *l.StartLine)
-		if l.EndLine != nil {
-			result += fmt.Sprintf(":%d", *l.EndLine)
+	if l.StartLine > 0 {
+		result += fmt.Sprintf(":%d", l.StartLine)
+		if l.EndLine > 0 {
+			result += fmt.Sprintf(":%d", l.EndLine)
 		}
 	}
 	return result

@@ -58,7 +58,7 @@ func (g *Gitlab) CommentFindingOnMergeRequest(context context.Context, findings 
 		if location != nil {
 			locationUrl := fmt.Sprintf("%s/-/blob/%s/%s#L%d", projectUrl, commitSha, location.Path, location.StartLine)
 			remoteFindingUrl := fmt.Sprintf("%s/#/finding/%s", context.Value("server"), f.ID)
-			msg := fmt.Sprintf("**[%s](%s)**\n\n**FindingLocation:** `%s` @ [%s](%s)\n\n**Description**\n\n%s", f.Name, remoteFindingUrl, location.Snippet, location.Path, locationUrl, f.Description)
+			msg := fmt.Sprintf("**[%s](%s)**\n\n**Location:** `%s` @ [%s](%s)\n\n**Description**\n\n%s", f.Name, remoteFindingUrl, location.Snippet, location.Path, locationUrl, f.Description)
 			if f.Recommendation != "" {
 				msg += fmt.Sprintf("\n\n**Recommendation**\n\n %s", f.Recommendation)
 			}
@@ -78,8 +78,8 @@ func (g *Gitlab) CommentFindingOnMergeRequest(context context.Context, findings 
 				OldPath:      &location.Path,
 				NewPath:      &location.Path,
 				PositionType: gitlab.Ptr("text"),
-				NewLine:      location.StartLine,
-				OldLine:      location.StartLine,
+				NewLine:      &location.StartLine,
+				OldLine:      &location.StartLine,
 			}
 			_, res, err := g.client.Discussions.CreateMergeRequestDiscussion(
 				projectID,

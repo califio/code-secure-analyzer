@@ -20,22 +20,22 @@ var SastResult = analyzer.FindingResult{
 			Location: &analyzer.FindingLocation{
 				Path:      "src/test.java",
 				Snippet:   "input",
-				StartLine: analyzer.Ptr(4),
-				EndLine:   analyzer.Ptr(4),
+				StartLine: 4,
+				EndLine:   4,
 			},
 			Metadata: &analyzer.FindingMetadata{
 				FindingFlow: []analyzer.FindingLocation{
 					analyzer.FindingLocation{
 						Path:      "src/test.java",
 						Snippet:   "sink",
-						StartLine: analyzer.Ptr(4),
-						EndLine:   analyzer.Ptr(4),
+						StartLine: 4,
+						EndLine:   4,
 					},
 					analyzer.FindingLocation{
 						Path:      "src/test.java",
 						Snippet:   "sink",
-						StartLine: analyzer.Ptr(8),
-						EndLine:   analyzer.Ptr(8),
+						StartLine: 8,
+						EndLine:   8,
 					},
 				},
 			},
