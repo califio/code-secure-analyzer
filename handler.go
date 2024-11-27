@@ -18,7 +18,7 @@ type Handler interface {
 func GetHandler() Handler {
 	// only init handler if there are no handler
 	apiKey := os.Getenv("CODE_SECURE_TOKEN")
-	remoteServer := os.Getenv("CODE_SECURE_SERVER")
+	remoteServer := os.Getenv("CODE_SECURE_URL")
 	if apiKey != "" && remoteServer != "" {
 		handler, err := NewRemoteHandler(remoteServer, apiKey)
 		if err != nil {
