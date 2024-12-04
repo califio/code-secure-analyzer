@@ -168,5 +168,5 @@ func SaveFindingResult(result UploadFindingResponse) error {
 		return err
 	}
 	logger.Info("Save finding result to: " + output)
-	return os.WriteFile(output, data, 0777)
+	return os.WriteFile(output, data, 0644)
 }
