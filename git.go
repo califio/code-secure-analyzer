@@ -15,6 +15,7 @@ type MergeRequest struct {
 
 type SourceManager interface {
 	Name() string
+	AccessToken() string
 	IsActive() bool
 	ProjectID() string
 	ProjectURL() string

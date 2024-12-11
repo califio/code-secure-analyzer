@@ -18,20 +18,23 @@ func NewGitlab() (*Gitlab, error) {
 		return nil, err
 	}
 	return &Gitlab{
-		AccessToken: accessToken,
+		accessToken: accessToken,
 		ServerURL:   serverUrl,
 		client:      client,
 	}, nil
 }
 
 type Gitlab struct {
-	AccessToken string
+	accessToken string
 	ServerURL   string
 	client      *gitlab.Client
 }
 
 func (g *Gitlab) Name() string {
 	return "GitLab"
+}
+func (g *Gitlab) AccessToken() string {
+	return g.accessToken
 }
 func (g *Gitlab) CommentFindingOnMergeRequest(context context.Context, findings []Finding, mergeRequest *MergeRequest) error {
 	projectID := g.ProjectID()
@@ -114,7 +117,14 @@ func (g *Gitlab) CommentFindingOnMergeRequest(context context.Context, findings 
 }
 
 func (g *Gitlab) IsActive() bool {
-	return g.AccessToken != "" && g.ServerURL != ""
+	isActive := os.Getenv("GITLAB_CI") == "true"
+	if isActive {
+		logger.Info("GitLab CI environment")
+		if g.accessToken == "" {
+			logger.Warn("GITLAB_TOKEN is not set. Add GITLAB_TOKEN variable to comment on merge request")
+		}
+	}
+	return isActive
 }
 
 func (g *Gitlab) ProjectID() string {
