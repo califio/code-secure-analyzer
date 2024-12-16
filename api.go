@@ -3,6 +3,7 @@ package analyzer
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/google/go-querystring/query"
 	"github.com/hashicorp/go-retryablehttp"
 	"gitlab.com/code-secure/analyzer/logger"
@@ -119,7 +120,7 @@ func (client *Client) InitScan(request *CiScanRequest) (*ScanInfo, error) {
 }
 
 func (client *Client) GetEnvironmentVariables(scanId string) ([]EnvironmentVariable, error) {
-	req, err := client.newRequest(http.MethodGet, "api/ci/scan/"+scanId, nil)
+	req, err := client.newRequest(http.MethodGet, fmt.Sprintf("api/ci/scan/%s/env", scanId), nil)
 	if err != nil {
 		return nil, err
 	}

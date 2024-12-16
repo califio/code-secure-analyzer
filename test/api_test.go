@@ -1,8 +1,10 @@
 package test
 
 import (
+	"fmt"
 	"gitlab.com/code-secure/analyzer"
 	"gitlab.com/code-secure/analyzer/logger"
+	"log"
 	"testing"
 )
 
@@ -91,6 +93,18 @@ var ScaResult = analyzer.SCAResult{
 			},
 		},
 	},
+}
+
+func TestGetEnv(t *testing.T) {
+	var client, _ = analyzer.NewClient("http://localhost", "3840a77a36cc4b21aac6a958ed45c33bb3949a0fb4204044b3247b3dd89d51bb")
+	envs, err := client.GetEnvironmentVariables("4097a4ed-244e-4e57-940b-a759cb434617")
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, env := range envs {
+		fmt.Println(env.Name)
+		fmt.Println(env.Value)
+	}
 }
 
 func TestInitScan(t *testing.T) {
