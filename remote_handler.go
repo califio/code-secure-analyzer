@@ -138,6 +138,18 @@ func (handler *RemoteHandler) InitScan(sourceManager SourceManager, scannerName 
 	if scanInfo != nil {
 		logger.Info("Scan initialized: " + scanInfo.ScanId)
 		handler.scanId = scanInfo.ScanId
+		logger.Info("Get environment variables")
+		envs, err := handler.client.GetEnvironmentVariables(scanInfo.ScanId)
+		if err != nil {
+			logger.Error(err.Error())
+		}
+		for _, env := range envs {
+			logger.Info("Set environment variable: " + env.Name)
+			err = os.Setenv(env.Name, env.Value)
+			if err != nil {
+				logger.Error("Set environment variable error: " + err.Error())
+			}
+		}
 	}
 	if err != nil {
 		logger.Error(err.Error())

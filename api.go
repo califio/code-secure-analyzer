@@ -63,6 +63,11 @@ type ScanInfo struct {
 	ScanId string `json:"scanId"`
 }
 
+type EnvironmentVariable struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
+}
+
 type Client struct {
 	baseURL    *url.URL
 	apiKey     string
@@ -111,6 +116,19 @@ func (client *Client) InitScan(request *CiScanRequest) (*ScanInfo, error) {
 		return nil, err
 	}
 	return &scanInfo, nil
+}
+
+func (client *Client) GetEnvironmentVariables(scanId string) ([]EnvironmentVariable, error) {
+	req, err := client.newRequest(http.MethodGet, "api/ci/scan/"+scanId, nil)
+	if err != nil {
+		return nil, err
+	}
+	var envs []EnvironmentVariable
+	_, err = client.do(req, &envs)
+	if err != nil {
+		return nil, err
+	}
+	return envs, nil
 }
 
 func (client *Client) UploadFinding(request UploadFindingRequest) (*UploadFindingResponse, error) {
