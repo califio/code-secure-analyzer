@@ -1,7 +1,7 @@
 package sarif
 
 import (
-	"gitlab.com/code-secure/analyzer"
+	analyzer "github.com/califio/code-secure-analyzer"
 	"regexp"
 	"strings"
 )
@@ -114,16 +114,16 @@ type physicalLocation struct {
 		Uri string `json:"uri"`
 	} `json:"artifactLocation"`
 	Region struct {
-		EndColumn *int `json:"endColumn"`
-		EndLine   *int `json:"endLine"`
+		EndColumn int `json:"endColumn"`
+		EndLine   int `json:"endLine"`
 		Message   struct {
 			Text string `json:"text"`
 		} `json:"message"`
 		Snippet struct {
 			Text string `json:"text"`
 		} `json:"snippet"`
-		StartColumn *int `json:"startColumn"`
-		StartLine   *int `json:"startLine"`
+		StartColumn int `json:"startColumn"`
+		StartLine   int `json:"startLine"`
 	} `json:"region"`
 }
 

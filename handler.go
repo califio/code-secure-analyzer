@@ -1,9 +1,9 @@
 package analyzer
 
 import (
+	"github.com/califio/code-secure-analyzer/logger"
 	"github.com/fatih/color"
 	"github.com/rodaine/table"
-	"gitlab.com/code-secure/analyzer/logger"
 	"os"
 )
 

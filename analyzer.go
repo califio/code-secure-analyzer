@@ -1,7 +1,7 @@
 package analyzer
 
 import (
-	"gitlab.com/code-secure/analyzer/logger"
+	"github.com/califio/code-secure-analyzer/logger"
 )
 
 type Analyzer struct {

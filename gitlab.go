@@ -3,8 +3,8 @@ package analyzer
 import (
 	"context"
 	"fmt"
-	"github.com/xanzy/go-gitlab"
-	"gitlab.com/code-secure/analyzer/logger"
+	"github.com/califio/code-secure-analyzer/logger"
+	gitlab "gitlab.com/gitlab-org/api/client-go"
 	"os"
 	"strconv"
 )

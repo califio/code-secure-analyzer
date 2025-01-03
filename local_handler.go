@@ -2,7 +2,7 @@ package analyzer
 
 import (
 	"fmt"
-	"gitlab.com/code-secure/analyzer/logger"
+	"github.com/califio/code-secure-analyzer/logger"
 )
 
 type LocalHandler struct{}

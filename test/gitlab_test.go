@@ -2,7 +2,7 @@ package test
 
 import (
 	"context"
-	"gitlab.com/code-secure/analyzer"
+	analyzer "github.com/califio/code-secure-analyzer"
 	"os"
 	"testing"
 )

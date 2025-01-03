@@ -3,8 +3,8 @@ package test
 import (
 	"context"
 	"fmt"
-	"gitlab.com/code-secure/analyzer"
-	"gitlab.com/code-secure/analyzer/logger"
+	analyzer "github.com/califio/code-secure-analyzer"
+	"github.com/califio/code-secure-analyzer/logger"
 	"testing"
 )
 
