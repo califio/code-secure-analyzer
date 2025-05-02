@@ -108,9 +108,9 @@ func (analyzer *SastAnalyzer) Run() {
 	var changedFiles []ChangedFile
 	if git.IsGitRepo(analyzer.projectPath) {
 		// merge request
-		if analyzer.sourceManager.MergeRequestID() != "" && analyzer.sourceManager.SourceBranchSha() != "" && analyzer.sourceManager.TargetBranchSha() != "" {
+		if analyzer.sourceManager.MergeRequestID() != "" && analyzer.sourceManager.TargetBranchSha() != "" {
 			tbl.AppendRow(table.Row{"Merge Request", analyzer.sourceManager.MergeRequestID()})
-			objectChange, err := git.DiffCommit(analyzer.projectPath, analyzer.sourceManager.SourceBranchSha(), analyzer.sourceManager.TargetBranchSha())
+			objectChange, err := git.DiffCommit(analyzer.projectPath, analyzer.sourceManager.CommitSha(), analyzer.sourceManager.TargetBranchSha())
 			if err != nil {
 				logger.Error(err.Error())
 			}

@@ -144,16 +144,12 @@ func (g GitLabEnv) SourceBranch() string {
 	return os.Getenv("CI_MERGE_REQUEST_SOURCE_BRANCH_NAME")
 }
 
-func (g GitLabEnv) SourceBranchSha() string {
-	return os.Getenv("CI_MERGE_REQUEST_SOURCE_BRANCH_SHA")
-}
-
 func (g GitLabEnv) TargetBranch() string {
 	return os.Getenv("CI_MERGE_REQUEST_TARGET_BRANCH_NAME")
 }
 
 func (g GitLabEnv) TargetBranchSha() string {
-	return os.Getenv("CI_MERGE_REQUEST_TARGET_BRANCH_SHA")
+	return os.Getenv("CI_MERGE_REQUEST_DIFF_BASE_SHA")
 }
 
 func (g GitLabEnv) MergeRequestID() string {

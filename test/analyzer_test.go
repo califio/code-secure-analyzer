@@ -36,6 +36,7 @@ func InitEnv() {
 	os.Setenv("CI_COMMIT_BRANCH", "dev")
 	os.Setenv("CI_COMMIT_TITLE", "Commit Test")
 }
+
 func TestSastAnalyzer(t *testing.T) {
 	InitEnv()
 	anlyz := analyzer.NewSastAnalyzer(analyzer.SastAnalyzerOption{

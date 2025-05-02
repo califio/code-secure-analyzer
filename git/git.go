@@ -25,7 +25,6 @@ type GitEnv interface {
 	CommitTitle() string
 	DefaultBranch() string
 	SourceBranch() string
-	SourceBranchSha() string
 	TargetBranch() string
 	TargetBranchSha() string
 	MergeRequestID() string
