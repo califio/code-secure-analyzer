@@ -8,11 +8,11 @@ import (
 )
 
 type Analyzer struct {
-	handler         Handler
-	sourceManager   git.GitEnv
-	mSourceManagers map[string]git.GitEnv
-	lastCommitSha   string
-	projectPath     string
+	handler           Handler
+	sourceManager     git.GitEnv
+	mSourceManagers   map[string]git.GitEnv
+	baselineCommitSha string
+	projectPath       string
 }
 
 func (analyzer *Analyzer) RegisterSourceManager(sourceManager git.GitEnv) {
@@ -92,7 +92,6 @@ func (analyzer *SastAnalyzer) Run() {
 	if err != nil {
 		logger.Fatal(err.Error())
 	}
-	analyzer.lastCommitSha = scanInfo.LastCommitSha
 	//
 	tbl := table.NewWriter()
 	tbl.SetOutputMirror(os.Stdout)
@@ -115,14 +114,15 @@ func (analyzer *SastAnalyzer) Run() {
 				logger.Error(err.Error())
 			}
 			changedFiles = FromObjectChanges(objectChange)
-		} else if analyzer.sourceManager.CommitSha() != "" && analyzer.lastCommitSha != "" {
-			objectChange, err := git.DiffCommit(analyzer.projectPath, analyzer.sourceManager.CommitSha(), analyzer.lastCommitSha)
+			analyzer.baselineCommitSha = analyzer.sourceManager.TargetBranchSha()
+			scanStrategy = ChangedFileOnly
+		} else if analyzer.sourceManager.CommitSha() != "" && scanInfo.LastCommitSha != "" {
+			objectChange, err := git.DiffCommit(analyzer.projectPath, analyzer.sourceManager.CommitSha(), analyzer.baselineCommitSha)
 			if err != nil {
 				logger.Error(err.Error())
 			}
 			changedFiles = FromObjectChanges(objectChange)
-		}
-		if changedFiles != nil && len(changedFiles) > 0 {
+			analyzer.baselineCommitSha = scanInfo.LastCommitSha
 			scanStrategy = ChangedFileOnly
 		}
 	}
@@ -140,9 +140,9 @@ func (analyzer *SastAnalyzer) Run() {
 	tbl.Render()
 	//
 	result, err := analyzer.scanner.Scan(ScanOption{
-		ChangedFiles:  changedFiles,
-		ScanType:      scanStrategy,
-		LastCommitSha: scanInfo.LastCommitSha,
+		ChangedFiles:      changedFiles,
+		ScanStrategy:      scanStrategy,
+		BaseLineCommitSha: analyzer.baselineCommitSha,
 	})
 	if err != nil {
 		analyzer.handler.OnError(err)

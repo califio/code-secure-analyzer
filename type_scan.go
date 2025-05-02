@@ -26,7 +26,7 @@ func (a ScanStrategy) String() string {
 type ScanStatus string
 
 type ScanOption struct {
-	ChangedFiles  []ChangedFile
-	ScanType      ScanStrategy
-	LastCommitSha string
+	ChangedFiles      []ChangedFile
+	ScanStrategy      ScanStrategy
+	BaseLineCommitSha string
 }
