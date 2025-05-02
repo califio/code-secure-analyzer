@@ -11,24 +11,24 @@ const (
 	ScannerTypeSecretDetection ScannerType = "Secret"
 )
 
-type FindingResult struct {
-	Findings []Finding
+type SastResult struct {
+	Findings []SastFinding
 }
 
-type SCAResult struct {
+type SastScanner interface {
+	Name() string
+	Type() ScannerType
+	Scan(option ScanOption) (*SastResult, error)
+}
+
+type ScaResult struct {
 	Packages            []Package
 	PackageDependencies []PackageDependency
 	Vulnerabilities     []Vulnerability
 }
 
-type FindingScanner interface {
+type ScaScanner interface {
 	Name() string
 	Type() ScannerType
-	Scan() (*FindingResult, error)
-}
-
-type SCAScanner interface {
-	Name() string
-	Type() ScannerType
-	Scan() (*SCAResult, error)
+	Scan() (*ScaResult, error)
 }

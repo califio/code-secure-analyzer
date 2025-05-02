@@ -1,17 +1,22 @@
 package analyzer
 
 import (
+	"github.com/califio/code-secure-analyzer/git"
 	"github.com/califio/code-secure-analyzer/logger"
+	"github.com/jedib0t/go-pretty/v6/table"
+	"os"
 )
 
 type Analyzer struct {
 	handler         Handler
-	sourceManager   SourceManager
-	mSourceManagers map[string]SourceManager
+	sourceManager   git.GitEnv
+	mSourceManagers map[string]git.GitEnv
+	lastCommitSha   string
+	projectPath     string
 }
 
-func (analyzer *Analyzer) RegisterSourceManager(sourceManager SourceManager) {
-	analyzer.mSourceManagers[sourceManager.Name()] = sourceManager
+func (analyzer *Analyzer) RegisterSourceManager(sourceManager git.GitEnv) {
+	analyzer.mSourceManagers[sourceManager.Provider()] = sourceManager
 	analyzer.sourceManager = sourceManager
 }
 
@@ -20,19 +25,18 @@ func (analyzer *Analyzer) RegisterHandler(handler Handler) {
 }
 
 func (analyzer *Analyzer) initDefaultSourceManager() {
-	analyzer.mSourceManagers = make(map[string]SourceManager)
-	gitlab, err := NewGitlab()
+	analyzer.mSourceManagers = make(map[string]git.GitEnv)
+	gitlab, err := git.NewGitLab()
 	if err != nil {
 		logger.Error(err.Error())
 	} else {
-		analyzer.mSourceManagers[gitlab.Name()] = gitlab
+		analyzer.mSourceManagers[gitlab.Provider()] = gitlab
 	}
 }
 
 func (analyzer *Analyzer) detectSourceManager() {
 	for _, sourceManager := range analyzer.mSourceManagers {
 		if sourceManager.IsActive() {
-			logger.Info("Source Manager: " + sourceManager.Name())
 			analyzer.sourceManager = sourceManager
 			return
 		}
@@ -40,79 +44,151 @@ func (analyzer *Analyzer) detectSourceManager() {
 	logger.Fatal("there is no source manager")
 }
 
-// FindingAnalyzer start
-type FindingAnalyzer struct {
+// SastAnalyzer start
+type SastAnalyzer struct {
 	Analyzer
-	scanner FindingScanner
+	scanner SastScanner
 }
 
-func (analyzer *FindingAnalyzer) RegisterScanner(scanner FindingScanner) {
-	analyzer.scanner = scanner
+type SastAnalyzerOption struct {
+	ProjectPath string
+	Scanner     SastScanner
 }
 
-func (analyzer *FindingAnalyzer) Run() {
-	if analyzer.scanner == nil {
-		logger.Fatal("there is no scanner")
-	}
-	if analyzer.handler == nil {
-		analyzer.handler = GetHandler()
-		if analyzer.handler == nil {
-			logger.Fatal("there is no handler")
-		}
-	}
-	if analyzer.mSourceManagers == nil {
-		analyzer.initDefaultSourceManager()
-	}
-	analyzer.detectSourceManager()
-	analyzer.handler.InitScan(analyzer.sourceManager, analyzer.scanner.Name(), analyzer.scanner.Type())
-	result, err := analyzer.scanner.Scan()
-	if err != nil {
-		logger.Fatal(err.Error())
-	}
-	if result != nil {
-		analyzer.handler.HandleFindings(analyzer.sourceManager, *result)
-	} else {
-		logger.Error("Finding result nil")
-	}
-	analyzer.handler.CompletedScan()
-}
-
-func NewFindingAnalyzer() *FindingAnalyzer {
-	analyzer := &FindingAnalyzer{
+func NewSastAnalyzer(option SastAnalyzerOption) *SastAnalyzer {
+	analyzer := &SastAnalyzer{
 		Analyzer: Analyzer{
-			handler: GetHandler(),
+			handler:     GetHandler(),
+			projectPath: option.ProjectPath,
 		},
-		scanner: nil,
+		scanner: option.Scanner,
 	}
 	analyzer.initDefaultSourceManager()
 	return analyzer
 }
 
-// SCAAnalyzer start
-type SCAAnalyzer struct {
-	Analyzer
-	scanner SCAScanner
-}
-
-func (analyzer *SCAAnalyzer) RegisterScanner(scanner SCAScanner) {
+func (analyzer *SastAnalyzer) RegisterScanner(scanner SastScanner) {
 	analyzer.scanner = scanner
 }
 
-func (analyzer *SCAAnalyzer) Run() {
+func (analyzer *SastAnalyzer) Run() {
+	if IsDir(analyzer.projectPath) == false {
+		logger.Fatal(analyzer.projectPath + " is not a directory")
+	}
 	if analyzer.scanner == nil {
-		logger.Fatal("there is no scanner")
+		logger.Fatal("no scanner")
 	}
 	if analyzer.handler == nil {
 		analyzer.handler = GetHandler()
 		if analyzer.handler == nil {
-			logger.Fatal("there is no handler")
+			logger.Fatal("no handler")
 		}
 	}
 	if analyzer.mSourceManagers == nil {
 		analyzer.initDefaultSourceManager()
 	}
 	analyzer.detectSourceManager()
-	analyzer.handler.InitScan(analyzer.sourceManager, analyzer.scanner.Name(), analyzer.scanner.Type())
+	scanInfo, err := analyzer.handler.OnStart(analyzer.sourceManager, analyzer.scanner.Name(), analyzer.scanner.Type())
+	if err != nil {
+		logger.Fatal(err.Error())
+	}
+	analyzer.lastCommitSha = scanInfo.LastCommitSha
+	//
+	tbl := table.NewWriter()
+	tbl.SetOutputMirror(os.Stdout)
+	tbl.SetStyle(table.StyleLight)
+	tbl.Style().Options.SeparateRows = true
+	tbl.AppendRow(table.Row{"Provider", analyzer.sourceManager.Provider()})
+	tbl.AppendRow(table.Row{"Repo", analyzer.sourceManager.ProjectURL()})
+	if analyzer.sourceManager.CommitBranch() != "" {
+		tbl.AppendRow(table.Row{"Branch", analyzer.sourceManager.CommitBranch()})
+	}
+	tbl.AppendRow(table.Row{"Commit", analyzer.sourceManager.CommitSha()})
+	scanStrategy := AllFiles
+	var changedFiles []ChangedFile
+	if git.IsGitRepo(analyzer.projectPath) {
+		// merge request
+		if analyzer.sourceManager.MergeRequestID() != "" && analyzer.sourceManager.SourceBranchSha() != "" && analyzer.sourceManager.TargetBranchSha() != "" {
+			tbl.AppendRow(table.Row{"Merge Request", analyzer.sourceManager.MergeRequestID()})
+			objectChange, err := git.DiffCommit(analyzer.projectPath, analyzer.sourceManager.SourceBranchSha(), analyzer.sourceManager.TargetBranchSha())
+			if err != nil {
+				logger.Error(err.Error())
+			}
+			changedFiles = FromObjectChanges(objectChange)
+		} else if analyzer.sourceManager.CommitSha() != "" && analyzer.lastCommitSha != "" {
+			objectChange, err := git.DiffCommit(analyzer.projectPath, analyzer.sourceManager.CommitSha(), analyzer.lastCommitSha)
+			if err != nil {
+				logger.Error(err.Error())
+			}
+			changedFiles = FromObjectChanges(objectChange)
+		}
+		if changedFiles != nil && len(changedFiles) > 0 {
+			scanStrategy = ChangedFileOnly
+		}
+	}
+	tbl.AppendRow(table.Row{"Scanner", analyzer.scanner.Name()})
+	tbl.AppendRow(table.Row{"Scan Strategy", scanStrategy.String()})
+	if scanInfo.ScanId != "" {
+		tbl.AppendRow(table.Row{"Scan ID", scanInfo.ScanId})
+	}
+	if scanInfo.LastCommitSha != "" {
+		tbl.AppendRow(table.Row{"Last Scan Commit", scanInfo.LastCommitSha})
+	}
+	if scanInfo.ScanUrl != "" {
+		tbl.AppendRow(table.Row{"Scan URL", scanInfo.ScanUrl})
+	}
+	tbl.Render()
+	//
+	result, err := analyzer.scanner.Scan(ScanOption{
+		ChangedFiles:  changedFiles,
+		ScanType:      scanStrategy,
+		LastCommitSha: scanInfo.LastCommitSha,
+	})
+	if err != nil {
+		analyzer.handler.OnError(err)
+		logger.Fatal(err.Error())
+	}
+	if result != nil {
+		analyzer.handler.HandleSastFindings(HandleSastFindingPros{
+			Result:        *result,
+			Strategy:      scanStrategy,
+			ChangedFiles:  changedFiles,
+			SourceManager: analyzer.sourceManager,
+		})
+	} else {
+		logger.Error("Finding result nil")
+	}
+	analyzer.handler.OnCompleted()
+}
+
+// ScaAnalyzer start
+type ScaAnalyzer struct {
+	Analyzer
+	scanner ScaScanner
+}
+
+func (analyzer *ScaAnalyzer) RegisterScanner(scanner ScaScanner) {
+	analyzer.scanner = scanner
+}
+
+func (analyzer *ScaAnalyzer) Run() {
+	if analyzer.scanner == nil {
+		logger.Fatal("no scanner")
+	}
+	if analyzer.handler == nil {
+		analyzer.handler = GetHandler()
+		if analyzer.handler == nil {
+			logger.Fatal("no handler")
+		}
+	}
+	if analyzer.mSourceManagers == nil {
+		analyzer.initDefaultSourceManager()
+	}
+	analyzer.detectSourceManager()
+	_, err := analyzer.handler.OnStart(analyzer.sourceManager, analyzer.scanner.Name(), analyzer.scanner.Type())
+	if err != nil {
+		logger.Fatal(err.Error())
+	}
 	result, err := analyzer.scanner.Scan()
 	if err != nil {
 		logger.Fatal(err.Error())
@@ -122,11 +198,11 @@ func (analyzer *SCAAnalyzer) Run() {
 	} else {
 		logger.Error("SCA result nil")
 	}
-	analyzer.handler.CompletedScan()
+	analyzer.handler.OnCompleted()
 }
 
-func NewSCAAnalyzer() *SCAAnalyzer {
-	analyzer := &SCAAnalyzer{
+func NewScaAnalyzer() *ScaAnalyzer {
+	analyzer := &ScaAnalyzer{
 		Analyzer: Analyzer{
 			handler: GetHandler(),
 		},

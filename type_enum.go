@@ -17,11 +17,3 @@ const (
 	SeverityLow      Severity = "Low"
 	SeverityInfo     Severity = "Info"
 )
-
-type ScanStatus string
-
-const (
-	StatusCompleted ScanStatus = "Completed"
-	StatusRunning   ScanStatus = "Running"
-	StatusError     ScanStatus = "Error"
-)

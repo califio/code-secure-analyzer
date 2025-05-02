@@ -1,22 +1,20 @@
 package test
 
 import (
-	"fmt"
 	analyzer "github.com/califio/code-secure-analyzer"
 	"github.com/califio/code-secure-analyzer/logger"
-	"log"
 	"testing"
 )
 
-var client, _ = analyzer.NewClient("http://localhost:5272", "5b615904c5be41cc8af813ddee581432c818f6d9cb01475aa0ff6172c73edeb7")
+var client = analyzer.NewClient("http://localhost:5272", "ab1e097840764f7ba093c43194cbaf8bceea50d3bef144d3994262428d176346")
 
-var SastResult = analyzer.FindingResult{
-	Findings: []analyzer.Finding{
-		analyzer.Finding{
+var SastResult = analyzer.SastResult{
+	Findings: []analyzer.SastFinding{
+		analyzer.SastFinding{
 			RuleID:         "rule-test-02",
 			Identity:       "rule-test-02",
-			Name:           "Finding Test 02",
-			Description:    "Finding Description 02",
+			Name:           "SastFinding Test 02",
+			Description:    "SastFinding Description 02",
 			Recommendation: "",
 			Severity:       analyzer.SeverityCritical,
 			Location: &analyzer.FindingLocation{
@@ -45,7 +43,7 @@ var SastResult = analyzer.FindingResult{
 	},
 }
 
-var ScaResult = analyzer.SCAResult{
+var ScaResult = analyzer.ScaResult{
 	Packages: []analyzer.Package{
 		analyzer.Package{
 			PkgId:    "01967d44-26a5-4eee-a1ac-46b30f5a2594",
@@ -95,21 +93,9 @@ var ScaResult = analyzer.SCAResult{
 	},
 }
 
-func TestGetEnv(t *testing.T) {
-	var client, _ = analyzer.NewClient("http://localhost", "3840a77a36cc4b21aac6a958ed45c33bb3949a0fb4204044b3247b3dd89d51bb")
-	envs, err := client.GetEnvironmentVariables("4097a4ed-244e-4e57-940b-a759cb434617")
-	if err != nil {
-		log.Fatal(err)
-	}
-	for _, env := range envs {
-		fmt.Println(env.Name)
-		fmt.Println(env.Value)
-	}
-}
-
 func TestInitScan(t *testing.T) {
 	isDefault := false
-	scan, err := client.InitScan(&analyzer.CiScanRequest{
+	scan, err := client.InitScan(analyzer.CiScanRequest{
 		Source:         "GitLab",
 		RepoId:         "50471840",
 		RepoUrl:        "https://gitlab.com/0xduo/vulnado",
@@ -131,8 +117,9 @@ func TestInitScan(t *testing.T) {
 	}
 	logger.Info(scan.ScanId)
 }
+
 func TestScanSAST(t *testing.T) {
-	scan, err := client.InitScan(&analyzer.CiScanRequest{
+	scan, err := client.InitScan(analyzer.CiScanRequest{
 		Source:         "GitLab",
 		RepoId:         "50471840",
 		RepoUrl:        "https://gitlab.com/0xduo/vulnado",
@@ -172,7 +159,7 @@ func TestScanSAST(t *testing.T) {
 }
 
 func TestScanDependency(t *testing.T) {
-	scan, err := client.InitScan(&analyzer.CiScanRequest{
+	scan, err := client.InitScan(analyzer.CiScanRequest{
 		Source:         "GitLab",
 		RepoId:         "50471840",
 		RepoUrl:        "https://gitlab.com/0xduo/vulnado",

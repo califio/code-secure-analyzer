@@ -1,17 +1,26 @@
 package analyzer
 
 import (
+	"fmt"
+	"github.com/califio/code-secure-analyzer/git"
 	"github.com/califio/code-secure-analyzer/logger"
-	"github.com/fatih/color"
-	"github.com/rodaine/table"
+	"github.com/jedib0t/go-pretty/v6/table"
 	"os"
 )
 
+type HandleSastFindingPros struct {
+	Result        SastResult
+	Strategy      ScanStrategy
+	ChangedFiles  []ChangedFile
+	SourceManager git.GitEnv
+}
+
 type Handler interface {
-	InitScan(source SourceManager, scannerName string, scannerType ScannerType)
-	HandleFindings(sourceManager SourceManager, result FindingResult)
-	HandleSCA(sourceManager SourceManager, result SCAResult)
-	CompletedScan()
+	OnStart(source git.GitEnv, scannerName string, scannerType ScannerType) (*CiScanInfo, error)
+	OnCompleted()
+	OnError(err error)
+	HandleSastFindings(input HandleSastFindingPros)
+	HandleSCA(sourceManager git.GitEnv, result ScaResult)
 }
 
 func GetHandler() Handler {
@@ -29,13 +38,50 @@ func GetHandler() Handler {
 	return NewLocalHandler()
 }
 
-func PrintFindings(findings []Finding) {
-	tbl := table.New("ID", "Name", "Severity", "Location")
-
-	tbl.WithHeaderFormatter(color.New(color.FgGreen, color.Underline).SprintfFunc()).
-		WithFirstColumnFormatter(color.New(color.FgYellow).SprintfFunc())
+func printFindings(findings []SastFinding) {
+	tbl := table.NewWriter()
+	tbl.SetOutputMirror(os.Stdout)
+	tbl.SetStyle(table.StyleLight)
+	tbl.Style().Options.SeparateRows = true
+	tbl.AppendHeader(table.Row{"ID", "Name", "Severity", "Location"})
 	for index, issue := range findings {
-		tbl.AddRow(index+1, issue.Name, issue.Severity, issue.Location.String())
+		tbl.AppendRow(table.Row{index + 1, issue.Name, issue.Severity, issue.Location.String()})
 	}
-	tbl.Print()
+	tbl.Render()
+}
+
+// default handler
+
+// local handler
+
+type LocalHandler struct{}
+
+func NewLocalHandler() *LocalHandler {
+	return &LocalHandler{}
+}
+
+func (handler *LocalHandler) OnStart(sourceManager git.GitEnv, scannerName string, scannerType ScannerType) (*CiScanInfo, error) {
+	return &CiScanInfo{}, nil
+}
+func (handler *LocalHandler) OnCompleted() {
+	logger.Info("scan completed")
+}
+func (handler *LocalHandler) OnError(err error) {
+	logger.Error(err.Error())
+}
+
+func (handler *LocalHandler) HandleSastFindings(input HandleSastFindingPros) {
+	if input.SourceManager == nil {
+		logger.Warn("there is no source manager (GitLab, GitHub, vv)")
+	}
+	if len(input.Result.Findings) > 0 {
+		logger.Warn(fmt.Sprintf("there are %d new findings", len(input.Result.Findings)))
+		printFindings(input.Result.Findings)
+	} else {
+		logger.Info("there are no new findings")
+	}
+}
+
+func (handler *LocalHandler) HandleSCA(sourceManager git.GitEnv, result ScaResult) {
+	//todo: write something here
 }

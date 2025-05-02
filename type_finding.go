@@ -1,6 +1,8 @@
 package analyzer
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type FindingLocation struct {
 	Path        string `json:"path,omitempty"`
@@ -11,18 +13,18 @@ type FindingLocation struct {
 	EndColumn   int    `json:"endColumn,omitempty"`
 }
 
-func (l *FindingLocation) String() string {
-	result := l.Path
-	if l.StartLine > 0 {
-		result += fmt.Sprintf(":%d", l.StartLine)
-		if l.EndLine > 0 {
-			result += fmt.Sprintf(":%d", l.EndLine)
+func (location *FindingLocation) String() string {
+	result := location.Path
+	if location.StartLine > 0 {
+		result += fmt.Sprintf(":%d", location.StartLine)
+		if location.EndLine > 0 {
+			result += fmt.Sprintf(":%d", location.EndLine)
 		}
 	}
 	return result
 }
 
-type Finding struct {
+type SastFinding struct {
 	ID             string           `json:"id,omitempty"`
 	RuleID         string           `json:"ruleId,omitempty" json:"ruleID,omitempty"`
 	Identity       string           `json:"identity,omitempty" json:"identity,omitempty"`

@@ -1,7 +1,7 @@
 package sarif
 
 import (
-	analyzer "github.com/califio/code-secure-analyzer"
+	"github.com/califio/code-secure-analyzer"
 	"regexp"
 	"strings"
 )

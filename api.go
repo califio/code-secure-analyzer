@@ -1,29 +1,25 @@
 package analyzer
 
 import (
-	"encoding/json"
-	"errors"
-	"fmt"
 	"github.com/califio/code-secure-analyzer/logger"
-	"github.com/google/go-querystring/query"
-	"github.com/hashicorp/go-retryablehttp"
-	"io"
-	"net/http"
-	"net/url"
+	"github.com/go-resty/resty/v2"
 	"strings"
 )
 
 type UploadFindingRequest struct {
-	ScanId   string    `json:"scanId,omitempty"`
-	Findings []Finding `json:"findings,omitempty"`
+	ScanId       string        `json:"scanId,omitempty"`
+	Findings     []SastFinding `json:"findings,omitempty"`
+	Strategy     ScanStrategy  `json:"strategy,omitempty"`
+	ChangedFiles []ChangedFile `json:"changedFiles,omitempty"`
 }
 
 type UploadFindingResponse struct {
-	NewFindings       []Finding `json:"newFindings,omitempty"`
-	ConfirmedFindings []Finding `json:"confirmedFindings,omitempty"`
-	OpenFindings      []Finding `json:"openFindings,omitempty"`
-	FixedFindings     []Finding `json:"fixedFindings,omitempty"`
-	IsBlock           bool      `json:"isBlock,omitempty"`
+	FindingUrl        string        `json:"findingUrl,omitempty"`
+	NewFindings       []SastFinding `json:"newFindings,omitempty"`
+	ConfirmedFindings []SastFinding `json:"confirmedFindings,omitempty"`
+	OpenFindings      []SastFinding `json:"openFindings,omitempty"`
+	FixedFindings     []SastFinding `json:"fixedFindings,omitempty"`
+	IsBlock           bool          `json:"isBlock,omitempty"`
 }
 
 type UploadDependencyRequest struct {
@@ -60,98 +56,71 @@ type UpdateCIScanRequest struct {
 	Description *string     `json:"description,omitempty"`
 }
 
-type ScanInfo struct {
-	ScanId string `json:"scanId"`
-}
-
-type EnvironmentVariable struct {
-	Name  string `json:"name"`
-	Value string `json:"value"`
+type CiScanInfo struct {
+	ScanId        string `json:"scanId"`
+	ScanUrl       string `json:"scanUrl"`
+	LastCommitSha string `json:"lastCommitSha"`
 }
 
 type Client struct {
-	baseURL    *url.URL
+	baseURL    string
 	apiKey     string
-	httpClient *retryablehttp.Client
+	httpClient *resty.Client
 	UserAgent  string
 }
 
-func NewClient(server string, apiKey string) (*Client, error) {
+func NewClient(baseUrl string, apiKey string) *Client {
 	client := &Client{
 		apiKey:     apiKey,
-		httpClient: retryablehttp.NewClient(),
+		httpClient: resty.New(),
+		baseURL:    strings.TrimSuffix(baseUrl, "/"),
 	}
-	err := client.setBaseURL(server)
-	if err != nil {
-		return nil, err
-	}
-	return client, nil
+	return client
 }
 
 func (client *Client) TestConnection() bool {
-	req, err := client.newRequest(http.MethodGet, "api/ci/ping", nil)
+	res, err := client.Request().Get(client.baseURL + "/api/ci/ping")
 	if err != nil {
 		logger.Error(err.Error())
 		return false
 	}
-	res, err := client.do(req, nil)
-	if err != nil {
-		logger.Error(err.Error())
-		return false
-	}
-	if res.StatusCode == 403 || res.StatusCode == 401 {
+	if res.StatusCode() == 403 || res.StatusCode() == 401 {
 		logger.Error("Token is invalid")
 		return false
 	}
-	return res.StatusCode == 200
+	return res.StatusCode() == 200
 }
 
-func (client *Client) InitScan(request *CiScanRequest) (*ScanInfo, error) {
-	req, err := client.newRequest(http.MethodPost, "api/ci/scan", request)
-	if err != nil {
-		return nil, err
-	}
-	var scanInfo ScanInfo
-	_, err = client.do(req, &scanInfo)
+func (client *Client) InitScan(request CiScanRequest) (*CiScanInfo, error) {
+	var scanInfo CiScanInfo
+	_, err := client.Request().
+		SetBody(request).
+		SetResult(&scanInfo).
+		Post(client.baseURL + "/api/ci/scan")
 	if err != nil {
 		return nil, err
 	}
 	return &scanInfo, nil
 }
 
-func (client *Client) GetEnvironmentVariables(scanId string) ([]EnvironmentVariable, error) {
-	req, err := client.newRequest(http.MethodGet, fmt.Sprintf("api/ci/scan/%s/env", scanId), nil)
-	if err != nil {
-		return nil, err
-	}
-	var envs []EnvironmentVariable
-	_, err = client.do(req, &envs)
-	if err != nil {
-		return nil, err
-	}
-	return envs, nil
-}
-
 func (client *Client) UploadFinding(request UploadFindingRequest) (*UploadFindingResponse, error) {
-	req, err := client.newRequest(http.MethodPost, "api/ci/finding", &request)
-	if err != nil {
-		return nil, err
-	}
 	var response UploadFindingResponse
-	_, err = client.do(req, &response)
+	_, err := client.Request().
+		SetBody(request).
+		SetResult(&response).
+		Post(client.baseURL + "/api/ci/finding")
 	if err != nil {
 		return nil, err
 	}
 	return &response, nil
 }
 
-func (client *Client) UploadDependency(request UploadDependencyRequest) (*UploadFindingResponse, error) {
-	req, err := client.newRequest(http.MethodPost, "api/ci/dependency", &request)
-	if err != nil {
-		return nil, err
-	}
-	var response UploadFindingResponse
-	_, err = client.do(req, &response)
+func (client *Client) UploadDependency(request UploadDependencyRequest) (*UploadDependencyResponse, error) {
+	var response UploadDependencyResponse
+	_, err := client.Request().
+		SetBody(request).
+		SetResult(&response).
+		Post(client.baseURL + "/api/ci/dependency")
 	if err != nil {
 		return nil, err
 	}
@@ -159,91 +128,12 @@ func (client *Client) UploadDependency(request UploadDependencyRequest) (*Upload
 }
 
 func (client *Client) UpdateScan(scanId string, request UpdateCIScanRequest) error {
-	req, err := client.newRequest(http.MethodPut, "api/ci/scan/"+scanId, &request)
-	if err != nil {
-		return err
-	}
-	_, err = client.do(req, nil)
+	_, err := client.Request().
+		SetBody(request).
+		Put(client.baseURL + "/api/ci/scan/" + scanId)
 	return err
 }
 
-func (client *Client) newRequest(method, path string, opt interface{}) (*retryablehttp.Request, error) {
-	u := *client.baseURL
-	unescaped, err := url.PathUnescape(path)
-	if err != nil {
-		return nil, err
-	}
-	// Set the encoded path data
-	u.RawPath = client.baseURL.Path + path
-	u.Path = client.baseURL.Path + unescaped
-
-	// Create a request specific headers map.
-	reqHeaders := make(http.Header)
-	reqHeaders.Set("Accept", "application/json")
-	reqHeaders.Set("CI-TOKEN", client.apiKey)
-
-	if client.UserAgent != "" {
-		reqHeaders.Set("User-Agent", client.UserAgent)
-	}
-
-	var body interface{}
-	switch {
-	case method == http.MethodPatch || method == http.MethodPost || method == http.MethodPut:
-		reqHeaders.Set("Content-Type", "application/json")
-
-		if opt != nil {
-			body, err = json.Marshal(opt)
-			if err != nil {
-				return nil, err
-			}
-		}
-	case opt != nil:
-		q, err := query.Values(opt)
-		if err != nil {
-			return nil, err
-		}
-		u.RawQuery = q.Encode()
-	}
-
-	req, err := retryablehttp.NewRequest(method, u.String(), body)
-	if err != nil {
-		return nil, err
-	}
-	// Set the request specific headers.
-	for k, v := range reqHeaders {
-		req.Header[k] = v
-	}
-	return req, nil
-}
-
-func (client *Client) do(req *retryablehttp.Request, v interface{}) (*http.Response, error) {
-	resp, err := client.httpClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	if resp.StatusCode != 200 {
-		buf := new(strings.Builder)
-		io.Copy(buf, resp.Body)
-		return nil, errors.New(buf.String())
-	}
-	defer resp.Body.Close()
-	defer io.Copy(io.Discard, resp.Body)
-	if v != nil {
-		err = json.NewDecoder(resp.Body).Decode(v)
-	}
-	return resp, err
-}
-
-func (client *Client) setBaseURL(urlStr string) error {
-	// Make sure the given URL end with a slash
-	if !strings.HasSuffix(urlStr, "/") {
-		urlStr += "/"
-	}
-	baseURL, err := url.Parse(urlStr)
-	if err != nil {
-		return err
-	}
-	// Update the base URL of the client.
-	client.baseURL = baseURL
-	return nil
+func (client *Client) Request() *resty.Request {
+	return client.httpClient.R().SetHeader("CI-TOKEN", client.apiKey)
 }
