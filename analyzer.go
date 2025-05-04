@@ -5,6 +5,7 @@ import (
 	"github.com/califio/code-secure-analyzer/logger"
 	"github.com/jedib0t/go-pretty/v6/table"
 	"os"
+	"strconv"
 )
 
 type Analyzer struct {
@@ -13,6 +14,7 @@ type Analyzer struct {
 	mSourceManagers   map[string]git.GitEnv
 	baselineCommitSha string
 	projectPath       string
+	maxChangedFiles   int
 }
 
 func (analyzer *Analyzer) RegisterSourceManager(sourceManager git.GitEnv) {
@@ -56,10 +58,19 @@ type SastAnalyzerOption struct {
 }
 
 func NewSastAnalyzer(option SastAnalyzerOption) *SastAnalyzer {
+	maxChangedFilesValue := os.Getenv("MAX_CHANGED_FILES")
+	maxChangedFile := 512
+	if maxChangedFilesValue != "" {
+		i, err := strconv.Atoi(maxChangedFilesValue)
+		if err != nil && i > 0 {
+			maxChangedFile = i
+		}
+	}
 	analyzer := &SastAnalyzer{
 		Analyzer: Analyzer{
-			handler:     GetHandler(),
-			projectPath: option.ProjectPath,
+			handler:         GetHandler(),
+			projectPath:     option.ProjectPath,
+			maxChangedFiles: maxChangedFile,
 		},
 		scanner: option.Scanner,
 	}
@@ -118,8 +129,11 @@ func (analyzer *SastAnalyzer) Run() {
 			if err != nil {
 				logger.Error(err.Error())
 			}
-			changedFiles = FromObjectChanges(objectChange)
-			scanStrategy = ChangedFileOnly
+			// only handle < max changed files
+			if objectChange.Len() < analyzer.maxChangedFiles {
+				changedFiles = FromObjectChanges(objectChange)
+				scanStrategy = ChangedFileOnly
+			}
 		}
 	}
 	tbl.AppendRow(table.Row{"Scanner", analyzer.scanner.Name()})
