@@ -152,6 +152,9 @@ func (g GitHubEnv) TargetBranch() string {
 }
 
 func (g GitHubEnv) TargetBranchSha() string {
+	if os.Getenv("GITHUB_BASE_REF_SHA") != "" {
+		return os.Getenv("GITHUB_BASE_REF_SHA")
+	}
 	if g.eventPayload != nil {
 		return g.eventPayload.PullRequest.Base.Sha
 	}
