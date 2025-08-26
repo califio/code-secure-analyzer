@@ -1,9 +1,10 @@
 package test
 
 import (
+	"github.com/califio/code-secure-analyzer/git"
+	"github.com/joho/godotenv"
 	"os"
 	"testing"
-	"github.com/califio/code-secure-analyzer/git"
 )
 
 func TestProviderAndProjectInfo(t *testing.T) {
@@ -21,4 +22,17 @@ func TestProviderAndProjectInfo(t *testing.T) {
 	if env.ProjectURL() != "https://github.com/califio/code-secure-analyzer" {
 		t.Errorf("ProjectURL mismatch")
 	}
+}
+
+func TestCommentOnPR(t *testing.T) {
+	_ = godotenv.Load()
+	env, _ := git.NewGitHub()
+	env.CreateMRDiscussion(git.MRDiscussionOption{
+		Title:     "Test MR Discussion",
+		Body:      "Test Comment",
+		Path:      "README.md",
+		StartLine: 3,
+		EndLine:   3,
+	})
+
 }

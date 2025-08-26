@@ -89,7 +89,7 @@ func (handler *RemoteHandler) HandleSastFindings(input HandleSastFindingPros) {
 				for _, newFinding := range response.NewFindings {
 					location := newFinding.Location
 					if location != nil {
-						locationUrl := fmt.Sprintf("%s/-/blob/%s/%s#L%d", sourceManager.ProjectURL(), sourceManager.CommitSha(), location.Path, location.StartLine)
+						locationUrl := fmt.Sprintf("%s/%s/%s#L%d", sourceManager.BlobURL(), sourceManager.CommitSha(), location.Path, location.StartLine)
 						remoteFindingUrl := fmt.Sprintf("%s/#/finding/%s", handler.server, newFinding.ID)
 						msg := fmt.Sprintf("**[%s](%s)**\n\n**Location:** `%s` @ [%s](%s)\n\n**Description**\n\n%s", newFinding.Name, remoteFindingUrl, location.Snippet, location.Path, locationUrl, newFinding.Description)
 						if newFinding.Recommendation != "" {
@@ -98,7 +98,7 @@ func (handler *RemoteHandler) HandleSastFindings(input HandleSastFindingPros) {
 						if newFinding.Metadata != nil && len(newFinding.Metadata.FindingFlow) > 0 {
 							flow := ""
 							for index, step := range newFinding.Metadata.FindingFlow {
-								url := fmt.Sprintf("%s/-/blob/%s/%s#L%d", sourceManager.ProjectURL(), sourceManager.CommitSha(), step.Path, step.StartLine)
+								url := fmt.Sprintf("%s/%s/%s#L%d", sourceManager.BlobURL(), sourceManager.CommitSha(), step.Path, step.StartLine)
 								flow += fmt.Sprintf("%d. `%s` @ [%s](%s)\n", index+1, step.Snippet, step.Path, url)
 							}
 							codeFlow := fmt.Sprintf("\n\n<details>\n<summary>SastFinding Flow</summary>\n\n%s\n</details>", flow)

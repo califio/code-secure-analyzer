@@ -5,9 +5,17 @@ go 1.23.4
 require (
 	github.com/go-git/go-git/v5 v5.16.0
 	github.com/go-resty/resty/v2 v2.16.5
-	github.com/jedib0t/go-pretty/v6 v6.6.7
+	github.com/jedib0t/go-pretty/v6 v6.6.8
 	github.com/sirupsen/logrus v1.9.3
-	gitlab.com/gitlab-org/api/client-go v0.128.0
+	gitlab.com/gitlab-org/api/client-go v0.142.1
+)
+
+require (
+	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/joho/godotenv v1.5.1 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/stretchr/testify v1.11.0 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
 require (
@@ -24,7 +32,7 @@ require (
 	github.com/google/go-github/v74 v74.0.0
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
-	github.com/hashicorp/go-retryablehttp v0.7.7 // indirect
+	github.com/hashicorp/go-retryablehttp v0.7.8 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/kevinburke/ssh_config v1.2.0 // indirect
 	github.com/mattn/go-runewidth v0.0.16 // indirect
@@ -35,9 +43,9 @@ require (
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
 	golang.org/x/crypto v0.37.0 // indirect
 	golang.org/x/net v0.39.0 // indirect
-	golang.org/x/oauth2 v0.25.0 // indirect
-	golang.org/x/sys v0.32.0 // indirect
-	golang.org/x/text v0.24.0 // indirect
-	golang.org/x/time v0.10.0 // indirect
+	golang.org/x/oauth2 v0.30.0
+	golang.org/x/sys v0.34.0 // indirect
+	golang.org/x/text v0.27.0 // indirect
+	golang.org/x/time v0.12.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 )

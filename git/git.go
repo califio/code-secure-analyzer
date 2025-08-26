@@ -19,6 +19,7 @@ type GitEnv interface {
 	ProjectID() string
 	ProjectName() string
 	ProjectURL() string
+	BlobURL() string
 	CommitTag() string
 	CommitBranch() string
 	CommitSha() string

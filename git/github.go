@@ -2,7 +2,9 @@ package git
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"strconv"
 	"strings"
@@ -13,9 +15,10 @@ import (
 )
 
 type GitHubEnv struct {
-	accessToken string
-	client      *github.Client
-	ctx         context.Context
+	accessToken  string
+	client       *github.Client
+	ctx          context.Context
+	eventPayload *eventPayload
 }
 
 func NewGitHub() (*GitHubEnv, error) {
@@ -26,10 +29,12 @@ func NewGitHub() (*GitHubEnv, error) {
 	)
 	tc := oauth2.NewClient(ctx, ts)
 	client := github.NewClient(tc)
+
 	return &GitHubEnv{
-		accessToken: accessToken,
-		client:      client,
-		ctx:         ctx,
+		accessToken:  accessToken,
+		client:       client,
+		ctx:          ctx,
+		eventPayload: getEventPayload(),
 	}, nil
 }
 
@@ -59,8 +64,18 @@ func (g GitHubEnv) CreateMRDiscussion(option MRDiscussionOption) error {
 		return errors.New("invalid GITHUB_REPOSITORY format")
 	}
 	owner, repo := parts[0], parts[1]
-	comment := &github.IssueComment{Body: &option.Body}
-	_, _, err = g.client.Issues.CreateComment(g.ctx, owner, repo, prNumber, comment)
+	review := &github.PullRequestReviewRequest{
+		Body:  &option.Title,
+		Event: github.Ptr("COMMENT"),
+		Comments: []*github.DraftReviewComment{
+			{
+				Path:     github.Ptr(option.Path),
+				Position: github.Ptr(option.StartLine),
+				Body:     github.Ptr(option.Body),
+			},
+		},
+	}
+	_, _, err = g.client.PullRequests.CreateReview(g.ctx, owner, repo, prNumber, review)
 	if err != nil {
 		logger.Error("Create comment on pull request failed")
 		logger.Error(err.Error())
@@ -75,28 +90,33 @@ func (g GitHubEnv) Provider() string {
 }
 
 func (g GitHubEnv) ProjectID() string {
-	return os.Getenv("GITHUB_REPOSITORY")
+	return os.Getenv("GITHUB_REPOSITORY_ID")
 }
 
 func (g GitHubEnv) ProjectName() string {
-	repo := os.Getenv("GITHUB_REPOSITORY")
-	parts := strings.Split(repo, "/")
-	if len(parts) == 2 {
-		return parts[1]
-	}
-	return repo
+	return os.Getenv("GITHUB_REPOSITORY")
 }
 
 func (g GitHubEnv) ProjectURL() string {
-	return "https://github.com/" + os.Getenv("GITHUB_REPOSITORY")
+	return fmt.Sprintf("%s/%s", os.Getenv("GITHUB_SERVER_URL"), os.Getenv("GITHUB_REPOSITORY"))
+}
+
+func (g GitHubEnv) BlobURL() string {
+	return fmt.Sprintf("%s/blob", g.ProjectURL())
 }
 
 func (g GitHubEnv) CommitTag() string {
-	return os.Getenv("GITHUB_REF_NAME")
+	if os.Getenv("GITHUB_REF_TYPE") == "tag" {
+		return os.Getenv("GITHUB_REF_NAME")
+	}
+	return ""
 }
 
 func (g GitHubEnv) CommitBranch() string {
-	return os.Getenv("GITHUB_REF_NAME")
+	if os.Getenv("GITHUB_REF_TYPE") == "branch" {
+		return os.Getenv("GITHUB_REF_NAME")
+	}
+	return ""
 }
 
 func (g GitHubEnv) CommitSha() string {
@@ -104,11 +124,23 @@ func (g GitHubEnv) CommitSha() string {
 }
 
 func (g GitHubEnv) CommitTitle() string {
-	return os.Getenv("GITHUB_COMMIT_TITLE")
+	if os.Getenv("GITHUB_COMMIT_TITLE") != "" {
+		return os.Getenv("GITHUB_COMMIT_TITLE")
+	}
+	if g.eventPayload != nil {
+		return g.eventPayload.headCommit.Message
+	}
+	return ""
 }
 
 func (g GitHubEnv) DefaultBranch() string {
-	return os.Getenv("GITHUB_DEFAULT_BRANCH")
+	if os.Getenv("GITHUB_DEFAULT_BRANCH") != "" {
+		return os.Getenv("GITHUB_DEFAULT_BRANCH")
+	}
+	if g.eventPayload != nil {
+		return g.eventPayload.Repository.DefaultBranch
+	}
+	return "main"
 }
 
 func (g GitHubEnv) SourceBranch() string {
@@ -120,32 +152,78 @@ func (g GitHubEnv) TargetBranch() string {
 }
 
 func (g GitHubEnv) TargetBranchSha() string {
-	prNumberStr := g.MergeRequestID()
-	ownerRepo := os.Getenv("GITHUB_REPOSITORY")
-	parts := strings.Split(ownerRepo, "/")
-	if prNumberStr == "" || len(parts) != 2 {
-		return ""
+	if g.eventPayload != nil {
+		return g.eventPayload.PullRequest.Base.Sha
 	}
-	prNumber, err := strconv.Atoi(prNumberStr)
-	if err != nil {
-		return ""
-	}
-	owner, repo := parts[0], parts[1]
-	pr, _, err := g.client.PullRequests.Get(g.ctx, owner, repo, prNumber)
-	if err != nil || pr.Base == nil || pr.Base.SHA == nil {
-		return ""
-	}
-	return *pr.Base.SHA
+	return ""
 }
 
 func (g GitHubEnv) MergeRequestID() string {
-	return os.Getenv("GITHUB_PR_NUMBER")
+	if os.Getenv("GITHUB_PR_NUMBER") != "" {
+		return os.Getenv("GITHUB_PR_NUMBER")
+	}
+	if g.eventPayload != nil {
+		return g.eventPayload.Number
+	}
+	return ""
 }
 
 func (g GitHubEnv) MergeRequestTitle() string {
-	return os.Getenv("GITHUB_PR_TITLE")
+	if os.Getenv("GITHUB_PR_TITLE") != "" {
+		return os.Getenv("GITHUB_PR_TITLE")
+	}
+	if g.eventPayload != nil {
+		return g.eventPayload.PullRequest.Title
+	}
+	return ""
 }
 
 func (g GitHubEnv) JobURL() string {
-	return os.Getenv("GITHUB_RUN_URL")
+	return fmt.Sprintf("%s/%s/actions/runs/%s", os.Getenv("GITHUB_SERVER_URL"), os.Getenv("GITHUB_REPOSITORY"), os.Getenv("GITHUB_RUN_ID"))
+}
+
+func getEventPayload() *eventPayload {
+	eventPath := os.Getenv("GITHUB_EVENT_PATH")
+	if eventPath != "" {
+		data, err := os.ReadFile(eventPath)
+		if err != nil {
+			return nil
+		}
+		var payload eventPayload
+		if err := json.Unmarshal(data, &payload); err != nil {
+			return nil
+		}
+		return &payload
+	}
+	return nil
+}
+
+type eventPayload struct {
+	Number      string      `json:"number"`
+	PullRequest pullRequest `json:"pull_request"`
+	Repository  repository  `json:"repository"`
+	headCommit  headCommit  `json:"head_commit"`
+}
+
+type pullRequest struct {
+	Title string `json:"title"`
+	Base  struct {
+		Ref string `json:"ref"`
+		Sha string `json:"sha"`
+	} `json:"base"`
+	Head struct {
+		Ref string `json:"ref"`
+		Sha string `json:"sha"`
+	} `json:"head"`
+}
+
+type headCommit struct {
+	Id      string `json:"id"` // this is commit sha
+	Message string `json:"message"`
+}
+type repository struct {
+	Id            int    `json:"id"`
+	Name          string `json:"name"`
+	DefaultBranch string `json:"default_branch"`
+	MasterBranch  string `json:"master_branch"`
 }

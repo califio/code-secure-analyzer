@@ -2,6 +2,7 @@ package git
 
 import (
 	"errors"
+	"fmt"
 	"github.com/califio/code-secure-analyzer/logger"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 	"os"
@@ -118,6 +119,10 @@ func (g GitLabEnv) ProjectName() string {
 
 func (g GitLabEnv) ProjectURL() string {
 	return os.Getenv("CI_PROJECT_URL")
+}
+
+func (g GitLabEnv) BlobURL() string {
+	return fmt.Sprintf("%s/-/blob", g.ProjectURL())
 }
 
 func (g GitLabEnv) CommitTag() string {

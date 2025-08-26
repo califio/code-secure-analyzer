@@ -1,1 +1,4 @@
 .idea
+.env
+test/.env
+test/*.json
