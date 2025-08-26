@@ -1,11 +1,12 @@
 package analyzer
 
 import (
+	"os"
+	"strconv"
+
 	"github.com/califio/code-secure-analyzer/git"
 	"github.com/califio/code-secure-analyzer/logger"
 	"github.com/jedib0t/go-pretty/v6/table"
-	"os"
-	"strconv"
 )
 
 type Analyzer struct {
@@ -33,6 +34,12 @@ func (analyzer *Analyzer) initDefaultSourceManager() {
 		logger.Error(err.Error())
 	} else {
 		analyzer.mSourceManagers[gitlab.Provider()] = gitlab
+	}
+	github, err := git.NewGitHub()
+	if err != nil {
+		logger.Error(err.Error())
+	} else {
+		analyzer.mSourceManagers[github.Provider()] = github
 	}
 }
 
