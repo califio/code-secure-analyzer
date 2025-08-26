@@ -113,6 +113,9 @@ func (g GitHubEnv) CommitTag() string {
 }
 
 func (g GitHubEnv) CommitBranch() string {
+	if g.MergeRequestID() != "" {
+		return g.eventPayload.PullRequest.Head.Ref
+	}
 	if os.Getenv("GITHUB_REF_TYPE") == "branch" {
 		return os.Getenv("GITHUB_REF_NAME")
 	}
@@ -128,7 +131,7 @@ func (g GitHubEnv) CommitTitle() string {
 		return os.Getenv("GITHUB_COMMIT_TITLE")
 	}
 	if g.eventPayload != nil {
-		return g.eventPayload.headCommit.Message
+		return g.eventPayload.HeadCommit.Message
 	}
 	return ""
 }
@@ -166,7 +169,7 @@ func (g GitHubEnv) MergeRequestID() string {
 		return os.Getenv("GITHUB_PR_NUMBER")
 	}
 	if g.eventPayload != nil {
-		return g.eventPayload.Number
+		return strconv.Itoa(g.eventPayload.PullRequest.Number)
 	}
 	return ""
 }
@@ -202,15 +205,15 @@ func getEventPayload() *eventPayload {
 }
 
 type eventPayload struct {
-	Number      string      `json:"number"`
 	PullRequest pullRequest `json:"pull_request"`
 	Repository  repository  `json:"repository"`
-	headCommit  headCommit  `json:"head_commit"`
+	HeadCommit  headCommit  `json:"head_commit"`
 }
 
 type pullRequest struct {
-	Title string `json:"title"`
-	Base  struct {
+	Number int    `json:"number"`
+	Title  string `json:"title"`
+	Base   struct {
 		Ref string `json:"ref"`
 		Sha string `json:"sha"`
 	} `json:"base"`
