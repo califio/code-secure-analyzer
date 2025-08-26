@@ -50,11 +50,11 @@ func TestCommentOnPR(t *testing.T) {
 	_ = godotenv.Load()
 	env, _ := git.NewGitHub()
 	env.CreateMRDiscussion(git.MRDiscussionOption{
-		Title:     "Test MR Discussion",
-		Body:      "Test Comment",
-		Path:      "README.md",
-		StartLine: 3,
-		EndLine:   3,
+		Title:     "Test MR Discussion3",
+		Body:      "Test Comment4",
+		Path:      "src/main/java/com/scalesec/vulnado/CowController.java",
+		StartLine: 16,
+		EndLine:   18,
 	})
 
 }

@@ -64,15 +64,23 @@ func (g GitHubEnv) CreateMRDiscussion(option MRDiscussionOption) error {
 		return errors.New("invalid GITHUB_REPOSITORY format")
 	}
 	owner, repo := parts[0], parts[1]
+	comment := github.DraftReviewComment{
+		Path: github.Ptr(option.Path),
+		Body: github.Ptr(option.Body),
+	}
+	if option.StartLine == option.EndLine {
+		logger.Info("same line")
+		comment.Line = github.Ptr(option.StartLine)
+	} else {
+		logger.Info("diff line")
+		comment.StartLine = github.Ptr(option.StartLine)
+		comment.Line = github.Ptr(option.EndLine)
+	}
 	review := &github.PullRequestReviewRequest{
 		Body:  &option.Title,
 		Event: github.Ptr("COMMENT"),
 		Comments: []*github.DraftReviewComment{
-			{
-				Path:     github.Ptr(option.Path),
-				Position: github.Ptr(option.StartLine),
-				Body:     github.Ptr(option.Body),
-			},
+			&comment,
 		},
 	}
 	_, _, err = g.client.PullRequests.CreateReview(g.ctx, owner, repo, prNumber, review)
