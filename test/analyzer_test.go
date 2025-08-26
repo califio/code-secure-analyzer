@@ -1,7 +1,6 @@
 package test
 
 import (
-	"fmt"
 	analyzer "github.com/califio/code-secure-analyzer"
 	"github.com/califio/code-secure-analyzer/logger"
 	"github.com/joho/godotenv"
@@ -27,7 +26,6 @@ func (t TestScanner) Scan(option analyzer.ScanOption) (*analyzer.SastResult, err
 
 func TestSastAnalyzer(t *testing.T) {
 	_ = godotenv.Load()
-	fmt.Println("Project path: " + os.Getenv("PROJECT_PATH"))
 	anlyz := analyzer.NewSastAnalyzer(analyzer.SastAnalyzerOption{
 		ProjectPath: os.Getenv("PROJECT_PATH"),
 		Scanner:     &TestScanner{},

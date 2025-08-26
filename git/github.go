@@ -18,7 +18,7 @@ type GitHubEnv struct {
 	accessToken  string
 	client       *github.Client
 	ctx          context.Context
-	eventPayload *eventPayload
+	eventPayload eventPayload
 }
 
 func NewGitHub() (*GitHubEnv, error) {
@@ -130,7 +130,7 @@ func (g GitHubEnv) CommitTitle() string {
 	if os.Getenv("GITHUB_COMMIT_TITLE") != "" {
 		return os.Getenv("GITHUB_COMMIT_TITLE")
 	}
-	if g.eventPayload != nil {
+	if g.eventPayload.HeadCommit != nil {
 		return g.eventPayload.HeadCommit.Message
 	}
 	return ""
@@ -140,7 +140,8 @@ func (g GitHubEnv) DefaultBranch() string {
 	if os.Getenv("GITHUB_DEFAULT_BRANCH") != "" {
 		return os.Getenv("GITHUB_DEFAULT_BRANCH")
 	}
-	if g.eventPayload != nil {
+
+	if g.eventPayload.Repository != nil {
 		return g.eventPayload.Repository.DefaultBranch
 	}
 	return "main"
@@ -158,7 +159,7 @@ func (g GitHubEnv) TargetBranchSha() string {
 	if os.Getenv("GITHUB_BASE_REF_SHA") != "" {
 		return os.Getenv("GITHUB_BASE_REF_SHA")
 	}
-	if g.eventPayload != nil {
+	if g.eventPayload.PullRequest != nil {
 		return g.eventPayload.PullRequest.Base.Sha
 	}
 	return ""
@@ -168,7 +169,7 @@ func (g GitHubEnv) MergeRequestID() string {
 	if os.Getenv("GITHUB_PR_NUMBER") != "" {
 		return os.Getenv("GITHUB_PR_NUMBER")
 	}
-	if g.eventPayload != nil {
+	if g.eventPayload.PullRequest != nil {
 		return strconv.Itoa(g.eventPayload.PullRequest.Number)
 	}
 	return ""
@@ -178,7 +179,7 @@ func (g GitHubEnv) MergeRequestTitle() string {
 	if os.Getenv("GITHUB_PR_TITLE") != "" {
 		return os.Getenv("GITHUB_PR_TITLE")
 	}
-	if g.eventPayload != nil {
+	if g.eventPayload.PullRequest != nil {
 		return g.eventPayload.PullRequest.Title
 	}
 	return ""
@@ -188,26 +189,28 @@ func (g GitHubEnv) JobURL() string {
 	return fmt.Sprintf("%s/%s/actions/runs/%s", os.Getenv("GITHUB_SERVER_URL"), os.Getenv("GITHUB_REPOSITORY"), os.Getenv("GITHUB_RUN_ID"))
 }
 
-func getEventPayload() *eventPayload {
+func getEventPayload() eventPayload {
 	eventPath := os.Getenv("GITHUB_EVENT_PATH")
-	if eventPath != "" {
-		data, err := os.ReadFile(eventPath)
-		if err != nil {
-			return nil
-		}
-		var payload eventPayload
-		if err := json.Unmarshal(data, &payload); err != nil {
-			return nil
-		}
-		return &payload
+	_, err := os.Stat(eventPath)
+	if err != nil {
+		logger.Fatal(fmt.Sprintf("GITHUB_EVENT_PATH (%s) not found", eventPath))
 	}
-	return nil
+	data, err := os.ReadFile(eventPath)
+	if err != nil {
+		logger.Fatal(fmt.Sprintf("read GITHUB_EVENT_PATH error: %s", err.Error()))
+	}
+	var payload eventPayload
+	err = json.Unmarshal(data, &payload)
+	if err != nil {
+		logger.Fatal(err.Error())
+	}
+	return payload
 }
 
 type eventPayload struct {
-	PullRequest pullRequest `json:"pull_request"`
-	Repository  repository  `json:"repository"`
-	HeadCommit  headCommit  `json:"head_commit"`
+	PullRequest *pullRequest `json:"pull_request"`
+	Repository  *repository  `json:"repository"`
+	HeadCommit  *headCommit  `json:"head_commit"`
 }
 
 type pullRequest struct {
