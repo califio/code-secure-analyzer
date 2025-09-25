@@ -90,9 +90,6 @@ func (analyzer *SastAnalyzer) RegisterScanner(scanner SastScanner) {
 }
 
 func (analyzer *SastAnalyzer) Run() {
-	if IsDir(analyzer.projectPath) == false {
-		logger.Fatal(analyzer.projectPath + " is not a directory")
-	}
 	if analyzer.scanner == nil {
 		logger.Fatal("no scanner")
 	}
@@ -106,6 +103,9 @@ func (analyzer *SastAnalyzer) Run() {
 		analyzer.initDefaultSourceManager()
 	}
 	analyzer.detectSourceManager()
+	if IsDir(analyzer.projectPath) == false {
+		logger.Fatal(analyzer.projectPath + " is not a directory")
+	}
 	scanInfo, err := analyzer.handler.OnStart(analyzer.sourceManager, analyzer.scanner.Name(), analyzer.scanner.Type())
 	if err != nil {
 		logger.Fatal(err.Error())

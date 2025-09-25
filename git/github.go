@@ -31,25 +31,25 @@ func NewGitHub() (*GitHubEnv, error) {
 	client := github.NewClient(tc)
 
 	return &GitHubEnv{
-		accessToken:  accessToken,
-		client:       client,
-		ctx:          ctx,
-		eventPayload: getEventPayload(),
+		accessToken: accessToken,
+		client:      client,
+		ctx:         ctx,
 	}, nil
 }
 
-func (g GitHubEnv) IsActive() bool {
+func (g *GitHubEnv) IsActive() bool {
 	isActive := os.Getenv("GITHUB_ACTIONS") == "true"
 	if isActive {
 		logger.Info("GitHub Actions Environment")
 		if g.accessToken == "" {
 			logger.Warn("GITHUB_TOKEN is not set. Add GITHUB_TOKEN variable to comment on pull request")
 		}
+		g.eventPayload = getEventPayload()
 	}
 	return isActive
 }
 
-func (g GitHubEnv) CreateMRDiscussion(option MRDiscussionOption) error {
+func (g *GitHubEnv) CreateMRDiscussion(option MRDiscussionOption) error {
 	prNumberStr := g.MergeRequestID()
 	if prNumberStr == "" {
 		return errors.New("cannot create discussion without pull request")
@@ -93,34 +93,34 @@ func (g GitHubEnv) CreateMRDiscussion(option MRDiscussionOption) error {
 	return err
 }
 
-func (g GitHubEnv) Provider() string {
+func (g *GitHubEnv) Provider() string {
 	return GitHub
 }
 
-func (g GitHubEnv) ProjectID() string {
+func (g *GitHubEnv) ProjectID() string {
 	return os.Getenv("GITHUB_REPOSITORY_ID")
 }
 
-func (g GitHubEnv) ProjectName() string {
+func (g *GitHubEnv) ProjectName() string {
 	return os.Getenv("GITHUB_REPOSITORY")
 }
 
-func (g GitHubEnv) ProjectURL() string {
+func (g *GitHubEnv) ProjectURL() string {
 	return fmt.Sprintf("%s/%s", os.Getenv("GITHUB_SERVER_URL"), os.Getenv("GITHUB_REPOSITORY"))
 }
 
-func (g GitHubEnv) BlobURL() string {
+func (g *GitHubEnv) BlobURL() string {
 	return fmt.Sprintf("%s/blob", g.ProjectURL())
 }
 
-func (g GitHubEnv) CommitTag() string {
+func (g *GitHubEnv) CommitTag() string {
 	if os.Getenv("GITHUB_REF_TYPE") == "tag" {
 		return os.Getenv("GITHUB_REF_NAME")
 	}
 	return ""
 }
 
-func (g GitHubEnv) CommitBranch() string {
+func (g *GitHubEnv) CommitBranch() string {
 	if g.MergeRequestID() != "" {
 		return g.eventPayload.PullRequest.Head.Ref
 	}
@@ -130,11 +130,11 @@ func (g GitHubEnv) CommitBranch() string {
 	return ""
 }
 
-func (g GitHubEnv) CommitSha() string {
+func (g *GitHubEnv) CommitSha() string {
 	return os.Getenv("GITHUB_SHA")
 }
 
-func (g GitHubEnv) CommitTitle() string {
+func (g *GitHubEnv) CommitTitle() string {
 	if os.Getenv("GITHUB_COMMIT_TITLE") != "" {
 		return os.Getenv("GITHUB_COMMIT_TITLE")
 	}
@@ -144,7 +144,7 @@ func (g GitHubEnv) CommitTitle() string {
 	return ""
 }
 
-func (g GitHubEnv) DefaultBranch() string {
+func (g *GitHubEnv) DefaultBranch() string {
 	if os.Getenv("GITHUB_DEFAULT_BRANCH") != "" {
 		return os.Getenv("GITHUB_DEFAULT_BRANCH")
 	}
@@ -155,15 +155,15 @@ func (g GitHubEnv) DefaultBranch() string {
 	return "main"
 }
 
-func (g GitHubEnv) SourceBranch() string {
+func (g *GitHubEnv) SourceBranch() string {
 	return os.Getenv("GITHUB_HEAD_REF")
 }
 
-func (g GitHubEnv) TargetBranch() string {
+func (g *GitHubEnv) TargetBranch() string {
 	return os.Getenv("GITHUB_BASE_REF")
 }
 
-func (g GitHubEnv) TargetBranchSha() string {
+func (g *GitHubEnv) TargetBranchSha() string {
 	if os.Getenv("GITHUB_BASE_REF_SHA") != "" {
 		return os.Getenv("GITHUB_BASE_REF_SHA")
 	}
@@ -173,7 +173,7 @@ func (g GitHubEnv) TargetBranchSha() string {
 	return ""
 }
 
-func (g GitHubEnv) MergeRequestID() string {
+func (g *GitHubEnv) MergeRequestID() string {
 	if os.Getenv("GITHUB_PR_NUMBER") != "" {
 		return os.Getenv("GITHUB_PR_NUMBER")
 	}
@@ -183,7 +183,7 @@ func (g GitHubEnv) MergeRequestID() string {
 	return ""
 }
 
-func (g GitHubEnv) MergeRequestTitle() string {
+func (g *GitHubEnv) MergeRequestTitle() string {
 	if os.Getenv("GITHUB_PR_TITLE") != "" {
 		return os.Getenv("GITHUB_PR_TITLE")
 	}
@@ -193,7 +193,7 @@ func (g GitHubEnv) MergeRequestTitle() string {
 	return ""
 }
 
-func (g GitHubEnv) JobURL() string {
+func (g *GitHubEnv) JobURL() string {
 	return fmt.Sprintf("%s/%s/actions/runs/%s", os.Getenv("GITHUB_SERVER_URL"), os.Getenv("GITHUB_REPOSITORY"), os.Getenv("GITHUB_RUN_ID"))
 }
 
